@@ -9,11 +9,12 @@ from kivymd.uix.card import MDCard
 from kivymd.uix.gridlayout import MDGridLayout
 from kivymd.uix.behaviors import ScaleBehavior
 from kivymd.uix.screen import MDScreen
-from kivy.uix.screenmanager import (CardTransition, SlideTransition)
+from kivy.uix.screenmanager import (CardTransition, SlideTransition, FadeTransition)
 from kivy.properties import (StringProperty, NumericProperty, BooleanProperty, ColorProperty)
 from kivy.core.window import Window
 
 import mysql.connector
+from kivymd.uix.screenmanager import MDScreenManager
 
 Window.size = (350, 680)
 
@@ -199,26 +200,22 @@ class ItemRows(MDBoxLayout):
 
 class TheGridLayer(MDGridLayout):
     app = None
-    catch_identical = []
     quantity = 0
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.app = Calculator
         self.ripple_color = "c7c7c7"
+        Clock.schedule_once(self.get_item, 2)
 
-        self.get_item()
-
-    def get_item(self):
+    def get_item(self, dt):
         self.app.cursor.execute(f"SELECT * FROM Oya_Item")
         result = self.app.cursor.fetchall()
         for i in result:
-            # for i in range(1, self.app.limit_container_rows):
             self.format_and_display_items(i)
 
     def format_and_display_items(self, data):
         self.quantity += 1
-        # if self.quantity < 4:
         self.app.row = self.quantity
         ItemRows.evt_time = data[0]
         ItemRows.itemName = data[1]
@@ -234,12 +231,17 @@ class TheGridLayer(MDGridLayout):
         ItemRows.my_edit_card = data[8]
 
         self.add_widget(ItemRows())
+        if self.abc:
+            self.abc[0].ids.res_cont.text = "Contents: " + str(self.quantity)
+            self.abc[1].ids.content_txt.text = "Contents: " + str(self.quantity)
 
-        self.app.content_count = self.quantity
 
-
-class Container(MDScreen):
+class Container(MDScreenManager):
     goto_home = True
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.on_pre_enter()
 
     def get_main_screen(self):
         if self.goto_home:
@@ -259,6 +261,14 @@ class Container(MDScreen):
     def my_transition(self, x, y):
         y.transition = SlideTransition()
         y.transition.duration = .5
+
+    def on_pre_enter(self, *args):
+        Clock.schedule_once(self.direct_app_content_page, 3)
+
+    def direct_app_content_page(self, dt):
+        self.transition = FadeTransition()
+        self.transition.duration = .3
+        self.current = 'app_content'
 
 
 class Calculator(MDApp):
@@ -283,7 +293,6 @@ class Calculator(MDApp):
     focus_btn = [None]
 
     row = NumericProperty()
-    content_count = NumericProperty()
     result = NumericProperty(0)
     result_color = ColorProperty([0, 0, 0, .7])
     result_bg_color = ColorProperty("#a5c4db")
@@ -312,7 +321,7 @@ class Calculator(MDApp):
         self.task_scr_manager = self.root.ids.task_scr.my_sub_manager.my_players
 
     def on_start(self):
-        # self.root.ids.manager.current = 'edit'
+        # self.root.ids.manager.current = 'task_screen'
         pass
 
     # DB Operation
@@ -1071,12 +1080,6 @@ class Calculator(MDApp):
         print(self.x)
         self.theme_cls.primary_palette = self.c[self.x]
         self.x += 1
-
-    def on_stop(self):
-        for child in self.home_calc.children:
-            old_index = child.row
-            # self.auto_update_index(updated, old_index, child.evt_time)
-            print(old_index, child.evt_time)
 
     def do(self, dt):
         self.x += 1
