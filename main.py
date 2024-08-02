@@ -2,21 +2,31 @@ import re
 from datetime import datetime
 
 from kivy.clock import Clock
+from kivy.graphics import Line, Color
+from kivy.metrics import dp
 from kivymd.app import MDApp
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.button import MDRaisedButton
 from kivymd.uix.card import MDCard
+from kivymd.uix.controllers import WindowController
 from kivymd.uix.gridlayout import MDGridLayout
 from kivymd.uix.behaviors import ScaleBehavior
+from kivymd.uix.relativelayout import MDRelativeLayout
 from kivymd.uix.screen import MDScreen
-from kivy.uix.screenmanager import (CardTransition, SlideTransition, FadeTransition)
+from kivy.uix.screenmanager import (CardTransition, SlideTransition)
 from kivy.properties import (StringProperty, NumericProperty, BooleanProperty, ColorProperty)
 from kivy.core.window import Window
+from kivy.animation import Animation
 
-import mysql.connector
 from kivymd.uix.screenmanager import MDScreenManager
+import mysql.connector
+from math import log as m
 
 Window.size = (350, 680)
+
+
+class Loader(MDRelativeLayout):
+    icon = StringProperty('plus-thick')
 
 
 class Dialog(MDScreen):
@@ -206,7 +216,7 @@ class TheGridLayer(MDGridLayout):
         super().__init__(**kwargs)
         self.app = Calculator
         self.ripple_color = "c7c7c7"
-        Clock.schedule_once(self.get_item, 2)
+        Clock.schedule_once(self.get_item, 2.5)
 
     def get_item(self, dt):
         self.app.cursor.execute(f"SELECT * FROM Oya_Item")
@@ -236,7 +246,7 @@ class TheGridLayer(MDGridLayout):
             self.abc[1].ids.content_txt.text = "Contents: " + str(self.quantity)
 
 
-class Container(MDScreenManager):
+class Container(MDScreenManager, WindowController):
     goto_home = True
 
     def __init__(self, **kwargs):
@@ -266,9 +276,13 @@ class Container(MDScreenManager):
         Clock.schedule_once(self.direct_app_content_page, 3)
 
     def direct_app_content_page(self, dt):
-        self.transition = FadeTransition()
+        self.transition = CardTransition()
         self.transition.duration = .3
         self.current = 'app_content'
+
+    def get_real_device_type(self) -> str:
+        print(str)
+        return str
 
 
 class Calculator(MDApp):
