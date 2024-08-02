@@ -1,0 +1,36 @@
+name: Build and Deploy Kivy App to APK
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.7.4'
+
+      - name: Install dependencies
+        run: |
+          pip install kivy==2.3.0
+          pip install kivymd==1.2.0
+          pip install mysql-connector-python==8.0.33
+          pip install buildozer
+
+      - name: Build APK
+        run: |
+          buildozer init
+          buildozer android debug
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: app-release.apk
+          path: bin/app-release.apk
