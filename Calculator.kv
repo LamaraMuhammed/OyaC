@@ -245,6 +245,7 @@ Container:
     shadow_offset: (1.5, -1.5)
     elevation: 1
     ripple_behavior: True
+    ripple_color: "c7c7c7"
     on_press:
         app.on_press(self)
         root.scale_down()
@@ -433,7 +434,6 @@ Container:
                 text: str(root.my_edit_card)
                 text_color: [1, 1, 1, 1]
                 font_size: '12sp'
-
 
 <ResultPanel@MDCard>:
     result_text: res_cont
@@ -887,22 +887,42 @@ Container:
     MDWidget:
         size_hint_y: .3
 <Loader>:
-    canvas:
-        Color:
-            rgba: (.7, 1, 1, .3)
-        Line:
-            width: 4
-            circle: (self.center_x, self.center_y, 25)
-        Color:
-            rgba: (0, 0, 0, .3)
-        Line:
-            width: 4
-            ellipse: (self.center_x - 24, self.center_y - 24, 50, 50)
+    MDGridLayout:
+        rows: 1
+        cols: 1
+        size_hint_x: .999
+        canvas:
+            Color:
+                rgba: (.7, 1, 1, .4)
+            Line:
+                width: 4
+                #circle: (self.center_x, self.center_y, 25)
+                ellipse: (self.center_x - 24, self.center_y - 25.5, 35, 50)
+            Color:
+                rgba: (.1, .5, .7, .9)
+            Line:
+                width: 4
+                ellipse: (self.center_x - 24, self.center_y - 24, 35, 50)
+        SampleLabel:
+            text: '[color=#CB37CC]y[/color]a[color=#CB37CC]C[/color]'
+            markup: True
+            text_color: [.7, 1, 1, .4]
+            font_size: '29sp'
+            font_name: "Font/Merienda-Black.ttf"
+    MDGridLayout:
+        cols: 1
+        size_hint_x: .99
+        SampleLabel:
+            text: 'a'
+            markup: True
+            text_color: [.1, .5, .7, 1]
+            font_size: '27sp'
+            font_name: "Font/Merienda-Black.ttf"
 <CoverCanvas@MDWidget>:
     canvas:
         Color:
             rgba: 1, 1, 1, .3
         Rectangle:
-            source: "Image/images (1).jpeg"
+            source: "Image/cover.jpeg"
             pos: self.pos
             size: self.size

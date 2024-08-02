@@ -1,14 +1,11 @@
 import re
-from datetime import datetime
+from datetime import (datetime, date)
 
 from kivy.clock import Clock
-from kivy.graphics import Line, Color
-from kivy.metrics import dp
 from kivymd.app import MDApp
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.button import MDRaisedButton
 from kivymd.uix.card import MDCard
-from kivymd.uix.controllers import WindowController
 from kivymd.uix.gridlayout import MDGridLayout
 from kivymd.uix.behaviors import ScaleBehavior
 from kivymd.uix.relativelayout import MDRelativeLayout
@@ -16,17 +13,15 @@ from kivymd.uix.screen import MDScreen
 from kivy.uix.screenmanager import (CardTransition, SlideTransition)
 from kivy.properties import (StringProperty, NumericProperty, BooleanProperty, ColorProperty)
 from kivy.core.window import Window
-from kivy.animation import Animation
 
 from kivymd.uix.screenmanager import MDScreenManager
 import mysql.connector
-from math import log as m
 
 Window.size = (350, 680)
 
 
 class Loader(MDRelativeLayout):
-    icon = StringProperty('plus-thick')
+    pass
 
 
 class Dialog(MDScreen):
@@ -176,9 +171,6 @@ class HelperPad(MDRaisedButton, ScaleBehavior):
 
 
 class Card(MDCard, ScaleBehavior):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.ripple_color = "c7c7c7"
 
     def scale_down(self):
         scl = .98
@@ -246,7 +238,7 @@ class TheGridLayer(MDGridLayout):
             self.abc[1].ids.content_txt.text = "Contents: " + str(self.quantity)
 
 
-class Container(MDScreenManager, WindowController):
+class Container(MDScreenManager):
     goto_home = True
 
     def __init__(self, **kwargs):
@@ -279,10 +271,6 @@ class Container(MDScreenManager, WindowController):
         self.transition = CardTransition()
         self.transition.duration = .3
         self.current = 'app_content'
-
-    def get_real_device_type(self) -> str:
-        print(str)
-        return str
 
 
 class Calculator(MDApp):
@@ -320,9 +308,6 @@ class Calculator(MDApp):
     home_calc = None
     task_scr_manager = None
 
-    c = ['Red', 'Pink', 'Purple', 'DeepPurple', 'Indigo', 'Blue', 'LightBlue', 'Cyan', 'Teal',
-         'Green', 'LightGreen', 'Lime', 'Yellow', 'Amber', 'Orange', 'DeepOrange', 'Brown', 'Gray', 'BlueGray']
-
     # Mysql db connection
     db = mysql.connector.connect(host="127.0.0.1", user="root", password="Lmr977552", database="Oya_Oya_C")
     cursor = db.cursor()
@@ -330,13 +315,12 @@ class Calculator(MDApp):
     def build(self):
         self.theme_cls.theme_style = 'Dark'
         self.theme_cls.material_style = "M3"
-        self.theme_cls.primary_palette = self.c[7]
         self.home_calc = self.root.ids.grid
         self.task_scr_manager = self.root.ids.task_scr.my_sub_manager.my_players
-
-    def on_start(self):
-        # self.root.ids.manager.current = 'task_screen'
-        pass
+        if date.today().strftime("%A") == 'Monday':
+            self.theme_cls.primary_palette = 'Teal'
+        else:
+            self.theme_cls.primary_palette = 'Cyan'
 
     # DB Operation
     def add_new_item(self, evt_time, item_name, theme_measure, roll, half, packet, status):
@@ -623,8 +607,7 @@ class Calculator(MDApp):
         self.long_press_val[0] = 0
         self.btn_rep[0] = None
         self.focus_btn[0] = None
-        # Clock.schedule_interval(self.do, 1)
-        # self._reset()
+        self._reset()
 
     def is_edit_container(self, x, y, z):
         if not self.pop_opened:
@@ -1085,25 +1068,6 @@ class Calculator(MDApp):
 
             self.catch_del_touch.clear()
             self.catch_touch.clear()
-
-    x = 0
-
-    def _reset(self):
-        if self.x == len(self.c):
-            self.x = 0
-        print(self.x)
-        self.theme_cls.primary_palette = self.c[self.x]
-        self.x += 1
-
-    def do(self, dt):
-        self.x += 1
-        self.add_new_item(datetime.now().strftime("%H:%M:%S:%p"), 'Inyass', ['Roll', 'Half', 'Packet'], 1, 2, 3, '#')
-        print(self.x)
-        if self.x == 25:
-            Clock.unschedule(self.do)
-
-    def test_me(self, *args):
-        print("Tested: ", args)
 
 
 if __name__ == "__main__":
