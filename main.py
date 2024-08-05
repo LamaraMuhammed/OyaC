@@ -8,7 +8,6 @@ from kivymd.uix.button import MDRaisedButton
 from kivymd.uix.card import MDCard
 from kivymd.uix.gridlayout import MDGridLayout
 from kivymd.uix.behaviors import ScaleBehavior
-from kivymd.uix.relativelayout import MDRelativeLayout
 from kivymd.uix.screen import MDScreen
 from kivy.uix.screenmanager import (CardTransition, SlideTransition)
 from kivy.properties import (StringProperty, NumericProperty, BooleanProperty, ColorProperty)
@@ -19,9 +18,11 @@ import mysql.connector
 
 Window.size = (350, 680)
 
-
-class Loader(MDRelativeLayout):
-    pass
+'''
+Kivy --version = 2.3.0
+Kivymd --version = 1.2.0
+mysql-connector-python --version = 8.0.33
+'''
 
 
 class Dialog(MDScreen):
@@ -119,7 +120,7 @@ class NewAddedRowContainer(MDBoxLayout):
             obj.isFull = True
 
     def display_newly_added(self, data, ind):
-        self.app.row = self.app.deleted_row_index[0] if self.app.deleted_row_index else data[8]
+        self.app.row = self.app.catch_deleted_row_index[0] if self.app.catch_deleted_row_index else data[8]
         ItemRows.evt_time = data[0]
         ItemRows.my_edit_card = "*"
 
@@ -137,8 +138,8 @@ class NewAddedRowContainer(MDBoxLayout):
         ind.cool_edit_grid.add_widget(ItemRows())  # edit screen
         ind.cool_del_grid.add_widget(ItemRows())  # delete screen
         ind.cool_result_panel.result_text.text = f"Contents: {data[8]}"
-        if self.app.deleted_row_index:
-            self.app.deleted_row_index.remove(self.app.deleted_row_index[0])
+        if self.app.catch_deleted_row_index:
+            self.app.catch_deleted_row_index.remove(self.app.catch_deleted_row_index[0])
 
     def reset_pads(self, pad):
         for edit_row in pad.cool_edit_grid.children:
@@ -211,7 +212,7 @@ class TheGridLayer(MDGridLayout):
         Clock.schedule_once(self.get_item, 2.5)
 
     def get_item(self, dt):
-        self.app.cursor.execute(f"SELECT * FROM Oya_Item")
+        self.app.cursor.execute("SELECT * FROM Oya_Item")
         result = self.app.cursor.fetchall()
         for i in result:
             self.format_and_display_items(i)
@@ -288,7 +289,7 @@ class Calculator(MDApp):
     is_the_all_row_selected = []
     identical = []
     catch_touch = []
-    deleted_row_index = []
+    catch_deleted_row_index = []
     long_press_val = [0]
     index_of_row_to_edit_or_delete = [0]
     btn_rep = [None]
@@ -607,7 +608,6 @@ class Calculator(MDApp):
         self.long_press_val[0] = 0
         self.btn_rep[0] = None
         self.focus_btn[0] = None
-        self._reset()
 
     def is_edit_container(self, x, y, z):
         if not self.pop_opened:
@@ -1040,7 +1040,7 @@ class Calculator(MDApp):
                                     edit_row = self.task_scr_manager[0].children
                                     for edit_child in edit_row:
                                         if edit_child.row == parent.row:
-                                            self.deleted_row_index.append(parent.row)
+                                            self.catch_deleted_row_index.append(parent.row)
                                             self.delete_item(parent.evt_time)  # db deletion
                                             del_scr.remove_widget(parent)
 

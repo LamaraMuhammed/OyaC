@@ -886,7 +886,7 @@ Container:
             pos_hint: {"center_x": .8}
     MDWidget:
         size_hint_y: .3
-<Loader>:
+<Loader@MDRelativeLayout>:
     MDGridLayout:
         rows: 1
         cols: 1
@@ -896,7 +896,6 @@ Container:
                 rgba: (.7, 1, 1, .4)
             Line:
                 width: 4
-                #circle: (self.center_x, self.center_y, 25)
                 ellipse: (self.center_x - 24, self.center_y - 25.5, 35, 50)
             Color:
                 rgba: (.1, .5, .7, .9)
@@ -918,6 +917,13 @@ Container:
             text_color: [.1, .5, .7, 1]
             font_size: '27sp'
             font_name: "Font/Merienda-Black.ttf"
+    MDBoxLayout:
+        pos_hint: {"center_y": .25}
+        SampleLabel:
+            text: 'On Loading ...'
+            text_color: [0, 0, .9, 1]
+            font_size: '17sp'
+            font_name: "Font/DancingScript-VariableFont_wght.ttf"
 <CoverCanvas@MDWidget>:
     canvas:
         Color:
