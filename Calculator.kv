@@ -18,7 +18,7 @@ Container:
                 title: app.title
                 elevation: 1
                 left_action_items: [['calculator-variant', lambda x: root.get_main_screen()]]
-                right_action_items: [['application-cog', lambda x: root.get_edit_screen()]]
+                right_action_items: [['table-cog', lambda x: root.get_edit_screen()]]
             MDScreenManager:
                 id: manager
                 MDScreen:
@@ -86,135 +86,231 @@ Container:
                     ResultPanel:
                         id: result_panel
                 MDScreen:
-                    name: 'task_screen'
-                    id: task_scr
-                    my_sub_manager: sub_manager
-                    md_bg_color: '#e2cbf2'
+                    name: 'setting'
+                    id: set_scr
+                    md_bg_color: 1, 1, 1, .97
                     MDBoxLayout:
+                        id: _set
+                        orientation: 'vertical'
+                        spacing: dp(17)
+                        clr: 0, 0, .5, 1
+                        MDCard:
+                            shadow_softness: 2
+                            shadow_offset: (1.5, -1.5)
+                            elevation: 0
+                            radius: [0, 0]
+                            ripple_behavior: True
+                            ripple_color: '#DFC8EF'
+                            size_hint_y: .1
+                            on_release: root.setting()
+                            MDBoxLayout:
+                                padding: dp(20), dp(5)
+                                md_bg_color: 1, 1, 1, .9
+                                MDLabel:
+                                    text: "Settings"
+                                    font_size: '14sp'
+                                    theme_text_color: "Custom"
+                                    text_color: _set.clr
+                                    font_name: "Font/Merienda-Light.ttf"
+                                    valign: 'center'
+                                    pos_hint: {"center_x": .5, "center_y": .5}
+                                MDIcon:
+                                    icon: 'cog'
+                                    theme_text_color: 'Custom'
+                                    text_color: _set.clr
+                                    font_size: '22sp'
+                                    pos_hint: {"center_y": .5}
+                        MDCard:
+                            shadow_softness: 2
+                            shadow_offset: (1.5, -1.5)
+                            elevation: 0
+                            radius: [0, 0]
+                            ripple_behavior: True
+                            ripple_color: '#DFC8EF'
+                            size_hint_y: .1
+                            on_release: root.customise()
+                            MDBoxLayout:
+                                padding: dp(20), dp(5)
+                                md_bg_color: 1, 1, 1, .9
+                                MDLabel:
+                                    text: "Customization"
+                                    font_size: '14sp'
+                                    theme_text_color: "Custom"
+                                    text_color: _set.clr
+                                    font_name: "Font/Merienda-Light.ttf"
+                                    valign: 'center'
+                                    pos_hint: {"center_x": .5, "center_y": .5}
+                                MDIcon:
+                                    icon: 'layers-edit'
+                                    theme_text_color: 'Custom'
+                                    text_color: _set.clr
+                                    font_size: '22sp'
+                                    pos_hint: {"center_y": .5}
+                        MDCard:
+                            shadow_softness: 2
+                            shadow_offset: (1.5, -1.5)
+                            elevation: 0
+                            radius: [0, 0]
+                            ripple_behavior: True
+                            ripple_color: '#DFC8EF'
+                            size_hint_y: .1
+                            on_release:
+                                root.transition.direction = 'left'
+                                root.transition.duration = .5
+                                root.current = 'about'
+                            MDBoxLayout:
+                                padding: dp(20), dp(5)
+                                md_bg_color: 1, 1, 1, .9
+                                MDLabel:
+                                    text: "About the App"
+                                    font_size: '14sp'
+                                    theme_text_color: "Custom"
+                                    text_color: _set.clr
+                                    font_name: "Font/Merienda-Light.ttf"
+                                    valign: 'center'
+                                    pos_hint: {"center_x": .5, "center_y": .5}
+                                MDIcon:
+                                    icon: 'information-outline'
+                                    theme_text_color: 'Custom'
+                                    text_color: _set.clr
+                                    font_size: '22sp'
+                                    pos_hint: {"center_y": .5}
+                        MDWidget:
+                            size_hint_y: .9
+    MDScreen:
+        name: 'task_screen'
+        id: task_scr
+        my_sub_manager: sub_manager
+        md_bg_color: '#e2cbf2'
+        back: False
+        on_pre_enter: root.check_password(self)
+        MDBoxLayout:
+            MDBoxLayout:
+                orientation: 'vertical'
+                MDBoxLayout:
+                    md_bg_color: 0, 0, 0, .2
+                    size_hint_y: .07
+                    padding: 20, 5
+                    spacing: dp(25)
+                    MDRelativeLayout:
+                        size_hint: .05, .1
+                        MDIconButton:
+                            icon: 'chevron-left'
+                            theme_icon_color: 'Custom'
+                            icon_color: 'black'
+                            pos_hint: {'center_x': 1.5, 'top': 10.5}
+                            on_release:
+                                root.back_to_setting_screen()
+                    MDRelativeLayout:
+                        size_hint_y: .1
+                        TxtButton:
+                            text: 'Add item'
+                            text_color: [0, 0, .7, 1] if sub_manager.current is 'add_row_scr' else "black"
+                            on_press:
+                                root.my_transition(self, sub_manager)
+                            on_release:
+                                sub_manager.transition.direction = 'right'
+                                app.is_edit_container(self, sub_manager, 'add_row_scr')
+                        MDWidget:
+                            md_bg_color: [0, 0, .7, 1] if sub_manager.current is 'add_row_scr' else [0, 0, 0, .01]
+                            size_hint: .5, .5
+                            pos_hint: {"center_x": .5, "center_y": .01}
+                    MDRelativeLayout:
+                        size_hint_y: .1
+                        TxtButton:
+                            text: 'Edit item'
+                            text_color: [0, 0, .7, 1] if sub_manager.current is 'edit_row_scr' else "black"
+                            on_release:
+                                app.is_edit_container(self, sub_manager, None)
+                        MDWidget:
+                            md_bg_color: [0, 0, .7, 1] if sub_manager.current is 'edit_row_scr' else [0, 0, 0, .01]
+                            size_hint: .5, .5
+                            pos_hint: {"center_x": .5, "center_y": .01}
+                    MDRelativeLayout:
+                        size_hint_y: .1
+                        TxtButton:
+                            text: 'Delete'
+                            text_color:  [0, 0, .7, 1] if sub_manager.current is 'del_row_scr' else "black"
+                            on_press:
+                                root.my_transition(self, sub_manager)
+                            on_release:
+                                sub_manager.transition.direction = 'right'
+                                app.is_edit_container(self, sub_manager, None)
+                        MDWidget:
+                            md_bg_color: [0, 0, .7, 1] if sub_manager.current is 'del_row_scr' else [0, 0, 0, .01]
+                            size_hint: .5, .5
+                            pos_hint: {"center_x": .5, "center_y": .01}
+                MDScreenManager:
+                    id: sub_manager
+                    my_players: [edit_grid, del_grid, dialog, get_edit_counter]
+                    MDScreen:
+                        name: 'add_row_scr'
+                        md_bg_color: '#e2cbf2'
+                        NewAddedRowContainer:
+                            id: get_edit_counter
+                            cool_grid: grid
+                            cool_result_panel: result_panel
+                            cool_edit_grid: edit_grid
+                            cool_del_grid: del_grid
+                    MDScreen:
+                        id: edit_row_scr
+                        name: 'edit_row_scr'
+                        md_bg_color: '#e2cbf2'
+                        MDBoxLayout:
+                            MDBoxLayout:
+                            MDBoxLayout:
+                                orientation: 'vertical'
+                                size_hint_x: .14
+                                padding: 10, 10, 5, 10
+                                spacing: dp(7)
+                                md_bg_color: 'green'
                         MDBoxLayout:
                             orientation: 'vertical'
+                            MDScrollView:
+                                TheGridLayer:
+                                    id: edit_grid
+                            MDWidget:
+                                size_hint_y: .01
+                    MDScreen:
+                        name: 'edit_container_scr'
+                        md_bg_color: '#e2cbf2'
+                        MDScrollView:
+                            EditGridLayer:
+                    MDScreen:
+                        name: 'del_row_scr'
+                        md_bg_color: '#e2cbf2'
+                        MDBoxLayout:
                             MDBoxLayout:
-                                md_bg_color: 0, 0, 0, .2
-                                size_hint_y: .07
-                                padding: 20, 5
-                                spacing: dp(25)
-                                MDRelativeLayout:
-                                    size_hint_y: .1
-                                    TxtButton:
-                                        text: 'Add item'
-                                        text_color: [0, 0, .7, 1] if sub_manager.current is 'add_row_scr' else "black"
-                                        on_press:
-                                            root.my_transition(self, sub_manager)
-                                        on_release:
-                                            sub_manager.transition.direction = 'right'
-                                            app.is_edit_container(self, sub_manager, 'add_row_scr')
-                                    MDWidget:
-                                        md_bg_color: [0, 0, .7, 1] if sub_manager.current is 'add_row_scr' else [0, 0, 0, .01]
-                                        size_hint: .5, .5
-                                        pos_hint: {"center_x": .5, "center_y": .01}
-                                MDRelativeLayout:
-                                    size_hint_y: .1
-                                    TxtButton:
-                                        text: 'Edit item'
-                                        text_color: [0, 0, .7, 1] if sub_manager.current is 'edit_row_scr' else "black"
-                                        on_release:
-                                            app.is_edit_container(self, sub_manager, None)
-                                    MDWidget:
-                                        md_bg_color: [0, 0, .7, 1] if sub_manager.current is 'edit_row_scr' else [0, 0, 0, .01]
-                                        size_hint: .5, .5
-                                        pos_hint: {"center_x": .5, "center_y": .01}
-                                MDRelativeLayout:
-                                    size_hint_y: .1
-                                    TxtButton:
-                                        text: 'Delete'
-                                        text_color:  [0, 0, .7, 1] if sub_manager.current is 'del_row_scr' else "black"
-                                        on_press:
-                                            root.my_transition(self, sub_manager)
-                                        on_release:
-                                            sub_manager.transition.direction = 'right'
-                                            app.is_edit_container(self, sub_manager, None)
-                                    MDWidget:
-                                        md_bg_color: [0, 0, .7, 1] if sub_manager.current is 'del_row_scr' else [0, 0, 0, .01]
-                                        size_hint: .5, .5
-                                        pos_hint: {"center_x": .5, "center_y": .01}
-                                MDRelativeLayout:
-                                    size_hint_y: .1
-                                    TxtButton:
-                                        text: 'About'
-                                        text_color: [0, 0, .7, 1] if sub_manager.current is 'about' else "black"
-                                        on_press:
-                                            root.my_transition(self, sub_manager)
-                                        on_release:
-                                            sub_manager.transition.direction = 'left'
-                                            app.is_edit_container(self, sub_manager, 'about')
-                                    MDWidget:
-                                        md_bg_color: [0, 0, .7, 1] if sub_manager.current is 'about' else [0, 0, 0, .01]
-                                        size_hint: .5, .5
-                                        pos_hint: {"center_x": .5, "center_y": .01}
-                            MDScreenManager:
-                                id: sub_manager
-                                my_players: [edit_grid, del_grid, dialog, get_edit_counter]
-                                MDScreen:
-                                    name: 'add_row_scr'
-                                    md_bg_color: '#e2cbf2'
-                                    NewAddedRowContainer:
-                                        id: get_edit_counter
-                                        cool_grid: grid
-                                        cool_result_panel: result_panel
-                                        cool_edit_grid: edit_grid
-                                        cool_del_grid: del_grid
-                                MDScreen:
-                                    id: edit_row_scr
-                                    name: 'edit_row_scr'
-                                    md_bg_color: '#e2cbf2'
-                                    MDBoxLayout:
-                                        MDBoxLayout:
-                                        MDBoxLayout:
-                                            orientation: 'vertical'
-                                            size_hint_x: .14
-                                            padding: 10, 10, 5, 10
-                                            spacing: dp(7)
-                                            md_bg_color: 'green'
-                                    MDBoxLayout:
-                                        orientation: 'vertical'
-                                        MDScrollView:
-                                            TheGridLayer:
-                                                id: edit_grid
-                                        MDWidget:
-                                            size_hint_y: .01
-                                MDScreen:
-                                    name: 'edit_container_scr'
-                                    md_bg_color: '#e2cbf2'
-                                    MDScrollView:
-                                        EditGridLayer:
-                                MDScreen:
-                                    name: 'del_row_scr'
-                                    md_bg_color: '#e2cbf2'
-                                    MDBoxLayout:
-                                        MDBoxLayout:
-                                        MDBoxLayout:
-                                            orientation: 'vertical'
-                                            size_hint_x: .14
-                                            padding: 10, 10, 5, 10
-                                            spacing: dp(7)
-                                            md_bg_color: 'green'
-                                    MDBoxLayout:
-                                        orientation: 'vertical'
-                                        MDScrollView:
-                                            TheGridLayer:
-                                                id: del_grid
-                                        MDWidget:
-                                            size_hint_y: .01
-                                    MDBoxLayout:
-                                        id: dialog
-                                        orientation: 'vertical'
-                                        size_hint_y: .2
-                                        padding: dp(50), dp(5)
-                                        pos_hint: {"center_x": .49, "center_y": .6}
-                                MDScreen:
-                                    name: 'about'
-                                    md_bg_color: '#e2cbf2'
-                                    About:
+                            MDBoxLayout:
+                                orientation: 'vertical'
+                                size_hint_x: .14
+                                padding: 10, 10, 5, 10
+                                spacing: dp(7)
+                                md_bg_color: 'green'
+                        MDBoxLayout:
+                            orientation: 'vertical'
+                            MDScrollView:
+                                TheGridLayer:
+                                    id: del_grid
+                            MDWidget:
+                                size_hint_y: .01
+                        MDBoxLayout:
+                            id: dialog
+                            orientation: 'vertical'
+                            size_hint_y: .2
+                            padding: dp(50), dp(5)
+                            pos_hint: {"center_x": .49, "center_y": .6}
+    MDScreen:
+        name: 'pwd_scr'
+        md_bg_color: '#e2cbf2'
+        on_pre_enter: pwd_crt.check_pwd()
+        PasswordCreation:
+            id: pwd_crt
+
+    MDScreen:
+        name: 'about'
+        md_bg_color: '#e2cbf2'
+        About:
 
 <TxtButton@MDTextButton>:
     halign: 'center'
@@ -678,8 +774,8 @@ Container:
         size_hint: .1, .1
         pos_hint: {"center_x": .5}
         MDIconButton:
-            icon: 'close'
-            icon_size: '17sp'
+            icon: 'chevron-down'
+            icon_size: '25sp'
             theme_icon_color: 'Custom'
             icon_color: [0, 0, .7, 1]
             pos_hint: {"center_x": .5, "center_y": .1}
@@ -825,7 +921,14 @@ Container:
 
 <About@MDBoxLayout>:
     orientation: 'vertical'
-    padding: 10, 10
+    padding: 10, 0
+    MDIconButton:
+        icon: 'close-circle-multiple-outline'
+        icon_size: '25sp'
+        theme_icon_color: 'Custom'
+        icon_color: 'black'
+        pos_hint: {'center_y': .5}
+        on_release: app.back_to_setting_screen('right', 'app_content')
     MDBoxLayout:
         padding: 10, 0
         spacing: dp(9)
@@ -932,3 +1035,261 @@ Container:
             source: "Image/cover.jpeg"
             pos: self.pos
             size: self.size
+<CheckPassword>:
+    id: check
+    md_bg_color: "grey"
+    MDBoxLayout:
+        id: box
+        orientation: 'vertical'
+        md_bg_color: '#e2cbf2'
+        MDRelativeLayout:
+            id: nav_box
+            size_hint_y: .1
+            MDIconButton:
+                id: nav
+                icon: 'close-circle-multiple-outline'
+                icon_size: '25sp'
+                theme_icon_color: 'Custom'
+                icon_color: 'black'
+                pos_hint: {'center_y': .5}
+                on_release: app.back_to_setting_screen('right', 'app_content')
+            MDCard:
+                id: skip
+                padding: ['5dp', '0dp']
+                ripple_behavior: True
+                ripple_color: "c7c7c7"
+                size_hint: None, .6
+                width: dp(75)
+                pos_hint: {'center_x': .83, 'center_y': .5}
+                md_bg_color: [1, 1, 1, .3]
+                on_release: root.match_password('', root, True)
+                MDBoxLayout:
+                    SampleLabel:
+                        text: 'Skip'
+                        font_size: '12sp'
+                        text_color: [.3, 0, 0, .9]
+                    MDIcon:
+                        icon: 'menu-right'
+                        font_size: '29sp'
+                        theme_text_color: 'Custom'
+                        text_color: [.3, 0, 0, .7]
+                        pos_hint: {'center_y': .5}
+        MDBoxLayout:
+            id: yes_pwd
+            size_hint_x: .9
+            pos_hint: {"center_x": .5}
+            MDCard:
+                md_bg_color: 0, .3, 0, .9
+                size_hint_y: .3
+                shadow_softness: 2
+                shadow_offset: (1.5, -1.5)
+                elevation: 1
+                pos_hint: {"center_x": .5, "center_y": .7}
+                MDBoxLayout:
+                    orientation: 'vertical'
+                    padding: 0, dp(17)
+                    SampleLabel:
+                        text: root.infor
+                        size_hint_y: .1
+                        font_size: '12sp'
+                        text_color: root.color
+                        pos_hint: {"center_x": .5, "center_y": .4}
+                        font_name: "Font/Merienda-Light.ttf"
+                    MDBoxLayout:
+                        size_hint: .5, .2
+                        padding: 0, 0, 0, dp(11)
+                        pos_hint: {"center_x": .5, "center_y": .6}
+                        MDTextField:
+                            id: pwd
+                            font_size: sp(17)
+                            size_hint_y: None
+                            height: dp(20)
+                            text_color_normal: 0, .7, 0, 1
+                            line_color_normal: 0, 0, 0, .7
+                            font_name: "Font/Merienda-Black.ttf"
+                    MDIconButton:
+                        icon: 'check'
+                        md_bg_color: 0, .7, 0, .7
+                        icon_size: '20sp'
+                        pos_hint: {'center_x': .5, 'center_y': .5}
+                        on_release: root.match_password(pwd.text, root)
+        MDBoxLayout:
+            id: no_pwd
+            orientation: 'vertical'
+            md_bg_color: '#e2cbf2'
+            size_hint_x: .9
+            pos_hint: {"center_x": .5}
+            padding: 0, dp(50), 0, 0
+            MDCard:
+                size_hint_y: .5
+                md_bg_color: [1, 1, 1, .3]
+                pos_hint: {'center_x': .5, 'center_y': .8}
+                MDBoxLayout:
+                    padding: [20, 7]
+                    SampleLabel:
+                        text: root.infor
+                        font_size: '13sp'
+                        markup: True
+                        font_name: "Font/Merienda-Light.ttf"
+            MDRelativeLayout:
+                MDCard:
+                    padding: ['3dp', '0dp']
+                    ripple_behavior: True
+                    ripple_color: "c7c7c7"
+                    size_hint: .45, .1
+                    pos_hint: {'center_x': .77, 'center_y': .9}
+                    md_bg_color: [1, 1, 1, .3]
+                    on_release: app.back_to_setting_screen('left', 'pwd_scr')
+                    MDBoxLayout:
+                        SampleLabel:
+                            text: 'Create password'
+                            font_size: '12sp'
+                            text_color: [0, .7, 0, 1]
+                        MDIcon:
+                            icon: 'menu-right'
+                            font_size: '30sp'
+                            theme_text_color: 'Custom'
+                            text_color: [0, .7, 0, 1]
+                            pos_hint: {'center_y': .5}
+<PasswordCreation>:
+    orientation: 'vertical'
+    MDIconButton:
+        icon: 'close-circle-multiple-outline'
+        icon_size: '25sp'
+        theme_icon_color: 'Custom'
+        icon_color: 'black'
+        pos_hint: {'center_y': .5}
+        on_release: app.back_to_setting_screen('right', 'app_content')
+    MDBoxLayout:
+        orientation: 'vertical'
+        padding: 10, 10
+        spacing: dp(11)
+        MDCard:
+            id: create_btn
+            shadow_softness: 2
+            shadow_offset: (1.5, -1.5)
+            elevation: 0
+            radius: [7, 7]
+            md_bg_color: [1, 1, 1, .9] if not root.is_pwd_created else [1, 1, 1, .4]
+            size_hint_y: .1
+            on_release: root.create_pwd(self)
+            MDBoxLayout:
+                padding: dp(17), dp(5)
+                MDLabel:
+                    id: crt_txt
+                    text: root.create
+                    font_size: '14sp'
+                    theme_text_color: "Custom"
+                    text_color: root.clr if not root.is_pwd_created else 'grey'
+                    font_name: "Font/Merienda-Light.ttf"
+                    valign: 'center'
+                    pos_hint: {"center_x": .5, "center_y": .5}
+                MDIcon:
+                    icon: 'key-plus'
+                    theme_text_color: 'Custom'
+                    text_color: root.clr if not root.is_pwd_created else 'grey'
+                    font_size: '22sp'
+                    pos_hint: {"center_y": .5}
+        MDCard:
+            id: update_btn
+            shadow_softness: 2
+            shadow_offset: (1.5, -1.5)
+            elevation: 0
+            radius: [7, 7]
+            md_bg_color: [1, 1, 1, .9] if root.is_pwd_created else [1, 1, 1, .4]
+            size_hint_y: .1
+            on_release: root.update_pwd(self)
+            MDBoxLayout:
+                padding: dp(17), dp(5)
+                MDLabel:
+                    id: upd_txt
+                    text: root.update
+                    font_size: '14sp'
+                    theme_text_color: "Custom"
+                    text_color: root.clr if root.is_pwd_created else 'grey'
+                    font_name: "Font/Merienda-Light.ttf"
+                    valign: 'center'
+                    pos_hint: {"center_x": .5, "center_y": .5}
+                MDIcon:
+                    icon: 'vector-point-edit'
+                    theme_text_color: 'Custom'
+                    text_color: root.clr if root.is_pwd_created else 'grey'
+                    font_size: '22sp'
+                    pos_hint: {"center_y": .5}
+        MDCard:
+            id: delete_btn
+            shadow_softness: 2
+            shadow_offset: (1.5, -1.5)
+            elevation: 0
+            radius: [7, 7]
+            md_bg_color: [1, 1, 1, .9] if root.is_pwd_created else [1, 1, 1, .4]
+            size_hint_y: .1
+            on_release: root.delete_pwd(self)
+            MDBoxLayout:
+                padding: dp(17), dp(5)
+                MDLabel:
+                    id: del_txt
+                    text: root.delete
+                    font_size: '14sp'
+                    theme_text_color: "Custom"
+                    text_color: root.clr if root.is_pwd_created else 'grey'
+                    font_name: "Font/Merienda-Light.ttf"
+                    valign: 'center'
+                    pos_hint: {"center_x": .5, "center_y": .5}
+                MDIcon:
+                    icon: 'close-circle-outline'
+                    theme_text_color: 'Custom'
+                    text_color: root.clr if root.is_pwd_created else 'grey'
+                    font_size: '22sp'
+                    pos_hint: {"center_y": .5}
+        MDWidget:
+            size_hint_y: .9
+<AskPassword>:
+    padding: 20, 30
+    on_touch_down: root.dismiss_me()
+    MDCard:
+        md_bg_color: 'grey'
+        size_hint_y: .3
+        shadow_softness: 17
+        shadow_offset: (1.5, -1.5)
+        elevation: 36
+        pos_hint: {"center_x": .5, "center_y": .6}
+        MDBoxLayout:
+            MDCard:
+                on_press: root.cancel_dismiss()
+                on_release: root.cancel_dismiss()
+                md_bg_color: 0, .3, 0, .9
+                MDBoxLayout:
+                    orientation: 'vertical'
+                    padding: 0, dp(17)
+                    SampleLabel:
+                        text: root.infor
+                        size_hint_y: .1
+                        font_size: '12sp'
+                        text_color: root.color
+                        pos_hint: {"center_x": .5, "center_y": .4}
+                        font_name: "Font/Merienda-Light.ttf"
+                    MDBoxLayout:
+                        id: box
+                        size_hint: .5, .2
+                        padding: 0, 0, 0, dp(11)
+                        pos_hint: {"center_x": .5, "center_y": .6}
+                        MDTextField:
+                            id: pwd
+                            font_size: sp(17)
+                            size_hint_y: None
+                            height: dp(20)
+                            text_color_normal: 0, .7, 0, 1
+                            line_color_normal: 0, 0, 0, .7
+                            font_name: "Font/Merienda-Black.ttf"
+                            on_focus: root.cancel_dismiss()
+                            on_text_validate: app.password_collection(self.text, root)
+                    MDIconButton:
+                        icon: 'check'
+                        md_bg_color: 0, .7, 0, .7
+                        icon_size: '20sp'
+                        pos_hint: {'center_x': .5, 'center_y': .5}
+                        on_press: root.cancel_dismiss()
+                        on_release:
+                            root.cancel_dismiss()
+                            app.password_collection(pwd.text, root)

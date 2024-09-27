@@ -1,20 +1,21 @@
 import re
 from datetime import (datetime, date)
 
-from kivy.clock import Clock
+from kivy.core.window import Window
 from kivymd.app import MDApp
+from kivy.clock import Clock
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.button import MDRaisedButton
 from kivymd.uix.card import MDCard
 from kivymd.uix.gridlayout import MDGridLayout
 from kivymd.uix.behaviors import ScaleBehavior
 from kivymd.uix.screen import MDScreen
-from kivy.uix.screenmanager import (CardTransition, SlideTransition)
+from kivy.uix.screenmanager import (CardTransition, SlideTransition, FadeTransition, FallOutTransition)
 from kivy.properties import (StringProperty, NumericProperty, BooleanProperty, ColorProperty)
-from kivy.core.window import Window
+from kivymd.utils.set_bars_colors import set_bars_colors
 
 from kivymd.uix.screenmanager import MDScreenManager
-import mysql.connector
+from db import DB
 
 Window.size = (350, 680)
 
@@ -23,6 +24,98 @@ Kivy --version = 2.3.0
 Kivymd --version = 1.2.0
 mysql-connector-python --version = 8.0.33
 '''
+
+
+class AskPassword(MDBoxLayout):
+    infor = StringProperty()
+    color = ColorProperty('white')
+    btn = None  # it named when added to class PasswordCreation widget
+
+    def dismiss_me(self):
+        Clock.schedule_once(self.remove_pop, .2)
+
+    def cancel_dismiss(self):
+        Clock.unschedule(self.remove_pop)
+
+    def remove_pop(self, dt):
+        self.parent.remove_widget(self)
+
+
+class PasswordCreation(MDBoxLayout):
+    db = DB()
+    create = StringProperty("Create your password")
+    update = StringProperty("Update your password")
+    delete = StringProperty("Delete your password")
+    clr = ColorProperty([0, 0, .5, 1])
+    is_pwd_created = BooleanProperty(False)
+
+    def create_pwd(self, btn):
+        if not self.is_pwd_created:
+            self.change_bg_color(btn)
+            self.ask_pwd('Create a strong password', 'create')
+
+    def update_pwd(self, btn):
+        if self.is_pwd_created:
+            self.change_bg_color(btn)
+            self.ask_pwd('Insert your previous password to update', 'update')
+
+    def delete_pwd(self, btn):
+        if self.is_pwd_created:
+            self.change_bg_color(btn)
+            self.ask_pwd('Insert your password to delete!', 'delete')
+
+    def change_bg_color(self, btn):
+        self.bg_color([1, 1, 1, .9])
+        if btn:
+            btn.md_bg_color = [0, .7, 0, .7]
+
+    def bg_color(self, clr):
+        if not self.is_pwd_created:
+            self.ids.create_btn.md_bg_color = clr
+
+        if self.is_pwd_created:
+            self.ids.update_btn.md_bg_color = clr
+            self.ids.delete_btn.md_bg_color = clr
+
+    def check_pwd(self):
+        res = self.db.get_pwd(0)
+        self.bg_color([1, 1, 1, .9])
+        if res:
+            self.create = "Password created"
+            self.is_pwd_created = True
+
+    def ask_pwd(self, infor, btn):
+        pop = AskPassword()
+        pop.infor = infor
+        pop.btn = btn
+        self.parent.add_widget(pop)
+
+
+class CheckPassword(MDBoxLayout):
+    db = DB()
+    infor = StringProperty('Write your password to enter and get started')
+    color = ColorProperty('white')
+
+    def match_password(self, pwd, root, skip_on_no_pwd=None):
+        if pwd and len(pwd) > 3:
+            res = self.db.check_pwd(pwd)
+            if res:
+                root.parent.parent.goto_home = True
+                root.parent.remove_widget(root)
+                Calculator.pop_opened = False
+                Container.count_no_pwd_entrance = 0
+
+            else:
+                self.color = 'red'
+                self.infor = "Incorrect password!"
+
+        if skip_on_no_pwd:
+            res = self.db.get_pwd(0)
+            if not res:  # this is in case of root widget refused to remove skip btn
+                root.parent.parent.goto_home = True
+                root.parent.remove_widget(root)
+                Calculator.pop_opened = False
+                Container.count_no_pwd_entrance += 1
 
 
 class Dialog(MDScreen):
@@ -103,7 +196,7 @@ class NewAddedRowContainer(MDBoxLayout):
         _packet_price = data[6]
         index = int(i.text.split(": ")[1]) + 1
 
-        self.app().add_new_item(
+        self.app().db.add_new_item(
             evt_time, item_name, theme_measure,
             _roll_price, _half_price, _packet_price, "*"
         )
@@ -212,16 +305,16 @@ class TheGridLayer(MDGridLayout):
         Clock.schedule_once(self.get_item, 2.5)
 
     def get_item(self, dt):
-        self.app.cursor.execute("SELECT * FROM Oya_Item")
-        result = self.app.cursor.fetchall()
+        result = self.app.db.retrieve_item()
         for i in result:
-            self.format_and_display_items(i)
+            if self.quantity < 2:
+                self.format_and_display_items(i)
 
     def format_and_display_items(self, data):
         self.quantity += 1
         self.app.row = self.quantity
         ItemRows.evt_time = data[0]
-        ItemRows.itemName = data[1]
+        ItemRows.itemName = 'P-name'  # data[1]
         ItemRows.theme_measure_1 = data[2]
         ItemRows.rollPrice = data[5]
 
@@ -241,25 +334,41 @@ class TheGridLayer(MDGridLayout):
 
 class Container(MDScreenManager):
     goto_home = True
+    count_no_pwd_entrance = 0
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.on_pre_enter()
 
     def get_main_screen(self):
-        if self.goto_home:
-            Calculator.is_edit_or_del_container = False
-            self.ids.manager.transition.direction = 'right'
-            self.ids.manager.current = 'main'
+        Calculator.is_edit_or_del_container = False
+        self.ids.manager.transition.direction = 'right'
+        self.ids.manager.current = 'main'
 
-            root_task = self.ids.task_scr.my_sub_manager.my_players
-            Calculator().reset_edit_pads(root_task)
-            Calculator().reset_del_pads(root_task)
+        root_task = self.ids.task_scr.my_sub_manager.my_players
+        Calculator().reset_edit_pads(root_task)
+        Calculator().reset_del_pads(root_task)
 
     def get_edit_screen(self):
         Calculator.is_edit_or_del_container = True
         self.ids.manager.transition.direction = 'left'
-        self.ids.manager.current = 'task_screen'
+        self.ids.manager.current = 'setting'
+
+    def setting(self):
+        self.change_scr('left', 'pwd_scr')
+
+    def customise(self):
+        self.change_scr('left', 'task_screen')
+
+    def back_to_setting_screen(self):
+        if self.goto_home:
+            self.change_scr('right', 'app_content')
+
+    def change_scr(self, direction, scr_name):
+        self.transition = SlideTransition()
+        self.transition.duration = .5
+        self.transition.direction = direction
+        self.current = scr_name
 
     def my_transition(self, x, y):
         y.transition = SlideTransition()
@@ -272,6 +381,38 @@ class Container(MDScreenManager):
         self.transition = CardTransition()
         self.transition.duration = .3
         self.current = 'app_content'
+
+    def check_password(self, scr):
+        Calculator.pop_opened = True
+        self.goto_home = False
+
+        if Calculator.db.get_pwd(0):
+            if len(scr.children) > 1:
+                scr.remove_widget(scr.children[0])
+
+            check_pwd = CheckPassword()
+            check_pwd.ids.nav_box.remove_widget(check_pwd.ids.skip)
+            check_pwd.ids.box.remove_widget(check_pwd.ids.no_pwd)
+            scr.add_widget(check_pwd)
+
+        else:
+            if len(scr.children) > 1:
+                scr.remove_widget(scr.children[0])
+            scr.add_widget(self.no_password())
+
+    def no_password(self):
+        txt = None
+        if self.count_no_pwd_entrance < 1:
+            txt = "You have to create a password for your items security, this will prevent " \
+                  "any abrupt or unauthorised addition, edition or deletion of any of your items."
+        else:
+            txt = '[color=#CB37CC]Hey! you[/color], password is recommended for your items safety,' \
+                  '[color=#CB37CC] please create password[/color] to avoid any frustration.'
+
+        check_pwd = CheckPassword()
+        check_pwd.infor = txt
+        check_pwd.ids.box.remove_widget(check_pwd.ids.yes_pwd)
+        return check_pwd
 
 
 class Calculator(MDApp):
@@ -309,31 +450,26 @@ class Calculator(MDApp):
     home_calc = None
     task_scr_manager = None
 
-    # Mysql db connection
-    db = mysql.connector.connect(host="127.0.0.1", user="root", password="Lmr977552", database="Oya_Oya_C")
-    cursor = db.cursor()
+    db = DB()
 
     def build(self):
         self.theme_cls.theme_style = 'Dark'
         self.theme_cls.material_style = "M3"
+        self.set_bars_colors()
         self.home_calc = self.root.ids.grid
         self.task_scr_manager = self.root.ids.task_scr.my_sub_manager.my_players
+
         if date.today().strftime("%A") == 'Monday':
             self.theme_cls.primary_palette = 'Teal'
         else:
             self.theme_cls.primary_palette = 'Cyan'
 
-    # DB Operation
-    def add_new_item(self, evt_time, item_name, theme_measure, roll, half, packet, status):
-        statement = "INSERT INTO Oya_Item(event_time, item_name, theme_measure_1, theme_measure_2, theme_measure_3, " \
-                    "roll_price, half_roll_price, packet_price, row_status) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        self.cursor.execute(statement, [evt_time, item_name, theme_measure[0], theme_measure[1],
-                                        theme_measure[2], roll, half, packet, status])
-        self.db.commit()
-
-    def delete_item(self, evt):
-        self.cursor.execute("DELETE FROM Oya_Item WHERE event_time = %s", (evt,))
-        self.db.commit()
+    def set_bars_colors(self):
+        set_bars_colors(
+            self.theme_cls.primary_color,  # status bar color
+            self.theme_cls.primary_color,  # navigation bar color
+            icons_color="Light",
+        )
 
     # Calc Operation
     def on_press(self, obj):
@@ -359,7 +495,7 @@ class Calculator(MDApp):
             if Clock.get_time() - self.press_time <= 0.5 and not press_down:
                 self.quantity_count = _qnt
                 self.quantity_count += 1
-                self._separate(obj, _price, _qnt)
+                self.do_math(obj, _price, _qnt)
             else:
                 self.long_press_val[0] = _price
                 self.btn_rep[0] = obj
@@ -368,80 +504,6 @@ class Calculator(MDApp):
             self.item_list = "You have reached limit"
             self.result_color = [.7, 0, 0, 1]
             self.item_list_color = [.7, 0, 0, 1]
-
-    def _separate(self, x, y, z):
-        if x.index.startswith('1'):
-            self.do_math(x, y, z)
-        elif x.index.startswith('2'):
-            self.do_math(x, y, z)
-        elif x.index.startswith('3'):
-            self.do_math(x, y, z)
-        elif x.index.startswith('4'):
-            self.do_math(x, y, z)
-        elif x.index.startswith('5'):
-            self.do_math(x, y, z)
-        elif x.index.startswith('6'):
-            self.do_math(x, y, z)
-        elif x.index.startswith('7'):
-            self.do_math(x, y, z)
-        elif x.index.startswith('8'):
-            self.do_math(x, y, z)
-        elif x.index.startswith('9'):
-            self.do_math(x, y, z)
-        elif x.index.startswith('10'):
-            self.do_math(x, y, z)
-        elif x.index.startswith('11'):
-            self.do_math(x, y, z)
-        elif x.index.startswith('12'):
-            self.do_math(x, y, z)
-        elif x.index.startswith('13'):
-            self.do_math(x, y, z)
-        elif x.index.startswith('14'):
-            self.do_math(x, y, z)
-        elif x.index.startswith('15'):
-            self.do_math(x, y, z)
-        elif x.index.startswith('16'):
-            self.do_math(x, y, z)
-        elif x.index.startswith('17'):
-            self.do_math(x, y, z)
-        elif x.index.startswith('18'):
-            self.do_math(x, y, z)
-        elif x.index.startswith('19'):
-            self.do_math(x, y, z)
-        elif x.index.startswith('20'):
-            self.do_math(x, y, z)
-        elif x.index.startswith('21'):
-            self.do_math(x, y, z)
-        elif x.index.startswith('22'):
-            self.do_math(x, y, z)
-        elif x.index.startswith('23'):
-            self.do_math(x, y, z)
-        elif x.index.startswith('24'):
-            self.do_math(x, y, z)
-        elif x.index.startswith('25'):
-            self.do_math(x, y, z)
-        elif x.index.startswith('26'):
-            self.do_math(x, y, z)
-        elif x.index.startswith('27'):
-            self.do_math(x, y, z)
-        elif x.index.startswith('28'):
-            self.do_math(x, y, z)
-        elif x.index.startswith('29'):
-            self.do_math(x, y, z)
-        elif x.index.startswith('30'):
-            self.do_math(x, y, z)
-        elif x.index.startswith('31'):
-            self.do_math(x, y, z)
-        elif x.index.startswith('32'):
-            self.do_math(x, y, z)
-        elif x.index.startswith('33'):
-            self.do_math(x, y, z)
-        elif x.index.startswith('34'):
-            self.do_math(x, y, z)
-        elif x.index.startswith('35'):
-            self.do_math(x, y, z)
-        elif x.index.startswith('36'):
-            self.do_math(x, y, z)
 
     def _sum_all(self, x):
         self.result = self.result + x if self.result != 0 else x
@@ -548,8 +610,10 @@ class Calculator(MDApp):
 
     def surrender(self, x, q):
         ind = x.index.split('-')[0]
-        self.is_the_all_row_selected.remove(x.index)
-        self.identical.remove(ind)
+        if x.index in self.is_the_all_row_selected:
+            self.is_the_all_row_selected.remove(x.index)
+            self.identical.remove(ind)
+
         if q == 'one':
             self.focus_btn[0] = None
         elif q == 'all':
@@ -609,6 +673,76 @@ class Calculator(MDApp):
         self.btn_rep[0] = None
         self.focus_btn[0] = None
 
+    def back_to_setting_screen(self, direction, scr_name):
+        self.root.transition = SlideTransition()
+        self.root.transition.duration = .5
+        self.root.transition.direction = direction
+        self.root.current = scr_name
+
+    old_pwd = None
+
+    def password_collection(self, pwd_txt, ask_pwd_root):
+        ids = self.root.ids.pwd_crt.ids
+        btn = ask_pwd_root.btn
+        if pwd_txt:
+            if len(pwd_txt) > 3:
+                check_pwd = self.db.check_pwd(pwd_txt)
+                if btn == 'create':
+                    if not check_pwd:
+                        self.db.create_pwd(pwd_txt)
+                        self.remove_pwd_pop(ask_pwd_root)
+                        self.root.ids.pwd_crt.is_pwd_created = True
+                        ids.crt_txt.text = "Password created"
+                        ids.upd_txt.text = "Update your password"
+                        ids.del_txt.text = "Delete your password"
+
+                elif btn == 'update':
+                    if check_pwd:
+                        ask_pwd_root.color = [0, 1, 0, 1]
+                        ask_pwd_root.ids.pwd.text = ''
+                        ask_pwd_root.infor = "Create new password now"
+                        ask_pwd_root.btn = "new_pwd"
+                        self.old_pwd = check_pwd
+
+                    else:
+                        ask_pwd_root.color = 'red'
+                        ask_pwd_root.infor = "Incorrect password"
+
+                elif btn == 'new_pwd':
+                    if self.old_pwd:
+                        self.db.update_pwd(self.old_pwd, pwd_txt)
+                        ids.upd_txt.text = "Password updated"
+                        ids.del_txt.text = "Delete your password"
+                        self.remove_pwd_pop(ask_pwd_root)
+                        self.old_pwd = None
+
+                    else:
+                        ask_pwd_root.color = 'red'
+                        ask_pwd_root.infor = "Sorry try again"
+                        ask_pwd_root.ids.pwd.text = ''
+                        ask_pwd_root.btn = "new_pwd"
+
+                elif btn == 'delete':
+                    if check_pwd:
+                        self.db.delete_pwd(pwd_txt)
+                        self.remove_pwd_pop(ask_pwd_root)
+                        self.root.ids.pwd_crt.is_pwd_created = False
+                        ids.crt_txt.text = "Create your password"
+                        ids.upd_txt.text = "Update your password"
+                        ids.del_txt.text = "Password deleted"
+                    else:
+                        ask_pwd_root.color = 'red'
+                        ask_pwd_root.infor = "Incorrect password"
+            else:
+                ask_pwd_root.color = 'red'
+                ask_pwd_root.infor = "Too short password"
+
+    def remove_pwd_pop(self, pop):
+        pop.color = [0, 1, 0, 1]
+        pop.infor = 'Done!'
+        Clock.schedule_once(lambda x: pop.parent.remove_widget(pop), 1)
+
+    # Task Screen   ---------------------------------------
     def is_edit_container(self, x, y, z):
         if not self.pop_opened:
             if not z:
@@ -786,14 +920,12 @@ class Calculator(MDApp):
         mng.transition.duration = 1
         mng.transition.direction = _dir
         mng.current = _scr
+        self.pop_opened = False
+        mng.parent.parent.parent.parent.goto_home = True
 
         if _dir == 'up':
             self.pop_opened = True
-            Container.goto_home = False
-
-        elif _dir == 'down':
-            self.pop_opened = False
-            Container.goto_home = True
+            mng.parent.parent.parent.parent.goto_home = False
 
     def collect_input(self, val):
         parent_scr = self.abc('edit')
@@ -808,20 +940,17 @@ class Calculator(MDApp):
 
             if card_name == 'roll':
                 query = "UPDATE Oya_Item SET item_name = %s, theme_measure_1 = %s, roll_price = %s WHERE event_time = %s"
-                self.cursor.execute(query, values)
-                self.db.commit()
+                self.db.update_item(query, values)
                 self.update_roll(parent_scr, row_id, val[1], val[2])
 
             elif card_name == 'half':
                 query = "UPDATE Oya_Item SET item_name = %s, theme_measure_2 = %s, half_roll_price = %s WHERE event_time = %s"
-                self.cursor.execute(query, values)
-                self.db.commit()
+                self.db.update_item(query, values)
                 self.update_half_roll(parent_scr, row_id, val[1], val[2])
 
             elif card_name == 'packet':
                 query = "UPDATE Oya_Item SET item_name = %s, theme_measure_3 = %s, packet_price = %s WHERE event_time = %s"
-                self.cursor.execute(query, values)
-                self.db.commit()
+                self.db.update_item(query, values)
                 self.update_packet(parent_scr, row_id, val[1], val[2])
 
         elif val[0] != 0 and val[1] != 0 and val[2] == 0:  # ================== 1, 2
@@ -830,20 +959,17 @@ class Calculator(MDApp):
 
             if card_name == 'roll':
                 query = "UPDATE Oya_Item SET item_name = %s, theme_measure_1 = %s WHERE event_time = %s"
-                self.cursor.execute(query, values)
-                self.db.commit()
+                self.db.update_item(query, values)
                 self.update_roll(parent_scr, row_id, val[1])
 
             elif card_name == 'half':
                 query = "UPDATE Oya_Item SET item_name = %s, theme_measure_2 = %s WHERE event_time = %s"
-                self.cursor.execute(query, values)
-                self.db.commit()
+                self.db.update_item(query, values)
                 self.update_half_roll(parent_scr, row_id, val[1])
 
             elif card_name == 'packet':
                 query = "UPDATE Oya_Item SET item_name = %s, theme_measure_3 = %s WHERE event_time = %s"
-                self.cursor.execute(query, values)
-                self.db.commit()
+                self.db.update_item(query, values)
                 self.update_packet(parent_scr, row_id, val[1])
 
         elif val[0] != 0 and val[1] == 0 and val[2] != 0:  # ================== 1, 3
@@ -852,20 +978,17 @@ class Calculator(MDApp):
 
             if card_name == 'roll':
                 query = "UPDATE Oya_Item SET item_name = %s, roll_price = %s WHERE event_time = %s"
-                self.cursor.execute(query, values)
-                self.db.commit()
+                self.db.update_item(query, values)
                 self.update_roll(parent_scr, row_id, price=val[2])
 
             elif card_name == 'half':
                 query = "UPDATE Oya_Item SET item_name = %s, half_roll_price = %s WHERE event_time = %s"
-                self.cursor.execute(query, values)
-                self.db.commit()
+                self.db.update_item(query, values)
                 self.update_half_roll(parent_scr, row_id, price=val[2])
 
             elif card_name == 'packet':
                 query = "UPDATE Oya_Item SET item_name = %s, packet_price = %s WHERE event_time = %s"
-                self.cursor.execute(query, values)
-                self.db.commit()
+                self.db.update_item(query, values)
                 self.update_packet(parent_scr, row_id, price=val[2])
 
         elif val[0] == 0 and val[1] != 0 and val[2] != 0:  # ================== 2, 3
@@ -873,20 +996,17 @@ class Calculator(MDApp):
 
             if card_name == 'roll':
                 query = "UPDATE Oya_Item SET theme_measure_1 = %s, roll_price = %s WHERE event_time = %s"
-                self.cursor.execute(query, values)
-                self.db.commit()
+                self.db.update_item(query, values)
                 self.update_roll(parent_scr, row_id, val[1], val[2])
 
             elif card_name == 'half':
                 query = "UPDATE Oya_Item SET theme_measure_2 = %s, half_roll_price = %s WHERE event_time = %s"
-                self.cursor.execute(query, values)
-                self.db.commit()
+                self.db.update_item(query, values)
                 self.update_half_roll(parent_scr, row_id, val[1], val[2])
 
             elif card_name == 'packet':
                 query = "UPDATE Oya_Item SET theme_measure_3 = %s, packet_price = %s WHERE event_time = %s"
-                self.cursor.execute(query, values)
-                self.db.commit()
+                self.db.update_item(query, values)
                 self.update_packet(parent_scr, row_id, val[1], val[2])
 
         elif val[0] != 0 and val[1] == 0 and val[2] == 0:  # ================== 1
@@ -894,28 +1014,24 @@ class Calculator(MDApp):
             values = (val[0], row_id)
 
             query = "UPDATE Oya_Item SET item_name = %s WHERE event_time = %s"
-            self.cursor.execute(query, values)
-            self.db.commit()
+            self.db.update_item(query, values)
 
         elif val[0] == 0 and val[1] != 0 and val[2] == 0:  # ================== 2
             values = (val[1], db_index)
 
             if card_name == 'roll':
                 query = "UPDATE Oya_Item SET theme_measure_1 = %s WHERE event_time = %s"
-                self.cursor.execute(query, values)
-                self.db.commit()
+                self.db.update_item(query, values)
                 self.update_roll(parent_scr, row_id, mea=val[1])
 
             elif card_name == 'half':
                 query = "UPDATE Oya_Item SET theme_measure_2 = %s WHERE event_time = %s"
-                self.cursor.execute(query, values)
-                self.db.commit()
+                self.db.update_item(query, values)
                 self.update_half_roll(parent_scr, row_id, mea=val[1])
 
             elif card_name == 'packet':
                 query = "UPDATE Oya_Item SET theme_measure_3 = %s WHERE event_time = %s"
-                self.cursor.execute(query, values)
-                self.db.commit()
+                self.db.update_item(query, values)
                 self.update_packet(parent_scr, row_id, mea=val[1])
 
         elif val[0] == 0 and val[1] == 0 and val[2] != 0:  # ================== 3
@@ -923,20 +1039,17 @@ class Calculator(MDApp):
 
             if card_name == 'roll':
                 query = "UPDATE Oya_Item SET roll_price = %s WHERE event_time = %s"
-                self.cursor.execute(query, values)
-                self.db.commit()
+                self.db.update_item(query, values)
                 self.update_roll(parent_scr, row_id, price=val[2])
 
             elif card_name == 'half':
                 query = "UPDATE Oya_Item SET half_roll_price = %s WHERE event_time = %s"
-                self.cursor.execute(query, values)
-                self.db.commit()
+                self.db.update_item(query, values)
                 self.update_half_roll(parent_scr, row_id, price=val[2])
 
             elif card_name == 'packet':
                 query = "UPDATE Oya_Item SET packet_price = %s WHERE event_time = %s"
-                self.cursor.execute(query, values)
-                self.db.commit()
+                self.db.update_item(query, values)
                 self.update_packet(parent_scr, row_id, price=val[2])
 
     def space_less(self, char):
@@ -1020,7 +1133,7 @@ class Calculator(MDApp):
             self.popup.add_widget(Dialog(name='dialog'))
             self.catch_del_touch.append(obj)
             self.pop_opened = True
-            Container.goto_home = False
+            self.popup.parent.parent.parent.parent.parent.parent.goto_home = False
 
     def delete_row(self, x, pop, cmd):
         parent = self.catch_del_touch[0].parent
@@ -1041,7 +1154,7 @@ class Calculator(MDApp):
                                     for edit_child in edit_row:
                                         if edit_child.row == parent.row:
                                             self.catch_deleted_row_index.append(parent.row)
-                                            self.delete_item(parent.evt_time)  # db deletion
+                                            self.db.delete_item(parent.evt_time)  # db deletion
                                             del_scr.remove_widget(parent)
 
                                             # other screens
@@ -1049,14 +1162,14 @@ class Calculator(MDApp):
                                             self.home_calc.remove_widget(home_child)
 
                                             remain = int(self.root.ids.result_panel.result_text.text.split(':')[1]) - 1
-                                            self.task_scr_manager[3].color = [0, 0, 0, .1]
+                                            self.task_scr_manager[3].bg_color = [0, 0, 0, .1]
                                             self.task_scr_manager[3].abc.text_color = [0, .7, 0, 1]
                                             self.task_scr_manager[3].abc.text = "Contents: " + str(remain)
                                             self.root.ids.result_panel.result_text.text = "Contents: " + str(remain)
 
                                             self.popup.remove_widget(pop)
                                             self.pop_opened = False
-                                            Container.goto_home = True
+                                            self.popup.parent.parent.parent.parent.parent.parent.goto_home = True
 
                                             self.catch_del_touch.clear()
                                             self.catch_touch.clear()
@@ -1064,7 +1177,7 @@ class Calculator(MDApp):
         if not cmd:
             self.popup.remove_widget(pop)
             self.pop_opened = False
-            Container.goto_home = True
+            self.popup.parent.parent.parent.parent.parent.parent.goto_home = True
 
             self.catch_del_touch.clear()
             self.catch_touch.clear()
