@@ -306,7 +306,10 @@ Container:
         on_pre_enter: pwd_crt.check_pwd()
         PasswordCreation:
             id: pwd_crt
-
+    MDScreen:
+        name: 'forget_pwd'
+        md_bg_color: '#e2cbf2'
+        ForgotPassword:
     MDScreen:
         name: 'about'
         md_bg_color: '#e2cbf2'
@@ -318,6 +321,7 @@ Container:
     font_size: '12sp'
     theme_text_color: "Custom"
     text_color: 0, 0, 0, 1
+    font_name: "Font/Merienda-Light.ttf"
     pos_hint: {"center_x": .5, "center_y": 4}
 
 <TheGridLayer>:
@@ -940,27 +944,32 @@ Container:
             font_size: '11sp'
             font_name: "Font/Merienda-Black.ttf"
     MDBoxLayout:
-        orientation: 'vertical'
-        size_hint_y: .3
-        padding: 10, 0
-        SampleLabel:
-            text:
-                "[color=#6e04de]OyaC[/color] is a free and new innovative calculator for busiest business and not, \
-                designed to help for making fast \n\
-                serving customers conveniently."
-            font_size: '11sp'
-            font_name: "Font/Merienda-Light.ttf"
-            markup: True
-        SampleLabel:
-            text:
-                "Some interesting features about [color=#6e04de]OyaC[/color] is that, you can customize it \
-                (i.e you can ADD, you can EDIT and you can DELETE) \
-                the newest rows you added. \n Avoid regular deletion of rows, this will help."
-            font_size: '11sp'
-            font_name: "Font/Merienda-Light.ttf"
-            markup: True
-        MDWidget:
-            size_hint_y: .3
+        size_hint_y: .5
+        MDScrollView:
+            MDBoxLayout:
+                orientation: 'vertical'
+                size_hint_y: 1
+                padding: 10, 0
+                SampleLabel:
+                    text:
+                        "[color=#6e04de]OyaC[/color] is a free and new innovative calculator for busiest business and not, \
+                        designed to help for making fast \n\
+                        serving customers conveniently."
+                    font_size: '11sp'
+                    font_name: "Font/Merienda-Light.ttf"
+                    markup: True
+                SampleLabel:
+                    text:
+                        "Some interesting features about [color=#6e04de]OyaC[/color] is that, you can customize it \
+                        (i.e you can ADD, you can EDIT and you can DELETE) \
+                        the newest rows you added. \n Avoid regular deletion of rows, this will help."
+                    font_size: '11sp'
+                    font_name: "Font/Merienda-Light.ttf"
+                    markup: True
+                SampleLabel:
+                    text: 'Password'
+                    font_size: '11sp'
+                    font_name: "Font/Merienda-Black.ttf"
     MDBoxLayout:
         padding: 10, 0
         spacing: dp(9)
@@ -1086,6 +1095,7 @@ Container:
                 elevation: 1
                 pos_hint: {"center_x": .5, "center_y": .7}
                 MDBoxLayout:
+                    id: card_content_box
                     orientation: 'vertical'
                     padding: 0, dp(17)
                     SampleLabel:
@@ -1096,6 +1106,7 @@ Container:
                         pos_hint: {"center_x": .5, "center_y": .4}
                         font_name: "Font/Merienda-Light.ttf"
                     MDBoxLayout:
+                        id: input_box
                         size_hint: .5, .2
                         padding: 0, 0, 0, dp(11)
                         pos_hint: {"center_x": .5, "center_y": .6}
@@ -1108,11 +1119,13 @@ Container:
                             line_color_normal: 0, 0, 0, .7
                             font_name: "Font/Merienda-Black.ttf"
                     MDIconButton:
+                        id: ok_btn
                         icon: 'check'
                         md_bg_color: 0, .7, 0, .7
                         icon_size: '20sp'
                         pos_hint: {'center_x': .5, 'center_y': .5}
-                        on_release: root.match_password(pwd.text, root)
+                        on_release:
+                            root.match_password(pwd.text, root) if self.icon == 'check' else app.forgot_password()
         MDBoxLayout:
             id: no_pwd
             orientation: 'vertical'
@@ -1293,3 +1306,67 @@ Container:
                         on_release:
                             root.cancel_dismiss()
                             app.password_collection(pwd.text, root)
+<ForgotPassword>:
+    orientation: 'vertical'
+    MDRelativeLayout:
+        size_hint_y: .1
+        MDIconButton:
+            icon: 'close-circle-multiple-outline'
+            icon_size: '25sp'
+            theme_icon_color: 'Custom'
+            icon_color: 'black'
+            pos_hint: {'center_y': .5}
+            on_release:
+                app.back_to_setting_screen('right', 'app_content') if root.count_ques == 5 else ''
+        MDCard:
+            radius: [100, 100]
+            size_hint: None, None
+            size: dp(36), dp(36)
+            pos_hint: {'center_x': .9, 'center_y': .5}
+            md_bg_color: [1, 1, 1, .3]
+            SampleLabel:
+                text: str(root.count_ques)
+                font_size: '15sp'
+                text_color: [0, 0, .7, 1]
+                font_name: "Font/Roboto-Bold.ttf"
+    MDBoxLayout:
+        orientation: 'vertical'
+        size_hint_y: .5
+        padding: dp(25), 0
+        spacing: dp(10)
+        SampleLabel:
+            text: root.infor
+            font_size: '11sp'
+            halign: 'left'
+            font_name: "Font/Merienda-Light.ttf"
+        MDRelativeLayout:
+            md_bg_color: [1, 1, 1, .3] if root.question else '#e2cbf2'
+            SampleLabel:
+                text: root.question
+                font_size: '13sp'
+                text_color: [0, 0, .7, 1]
+                font_name: "Font/Merienda-Light.ttf"
+        MDRelativeLayout:
+            id: btn_box
+            spacing: dp(100)
+            size_hint: .5, .5
+            pos_hint: {'center_x': .5}
+            MDFlatButton:
+                text: 'True'
+                theme_text_color: 'Custom'
+                text_color: [0, .7, 0, 1]
+                md_bg_color: [1, 1, 1, .3]
+                font_size: '12sp'
+                pos_hint: {'center_x': .2}
+                font_name: "Font/Merienda-Light.ttf"
+                on_release: root.answer(True)
+            MDFlatButton:
+                text: 'False'
+                theme_text_color: 'Custom'
+                text_color: [.7, 0, 0, 1]
+                md_bg_color: [1, 1, 1, .3]
+                font_size: '12sp'
+                pos_hint: {'center_x': .8}
+                font_name: "Font/Merienda-Light.ttf"
+                on_release: root.answer(False)
+    MDWidget:
