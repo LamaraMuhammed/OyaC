@@ -67,8 +67,6 @@ class ForgotPassword(MDBoxLayout):
         self.ids.btn_box.add_widget(self.false)
 
 
-
-
 class AskPassword(MDBoxLayout):
     infor = StringProperty()
     color = ColorProperty('white')
@@ -184,7 +182,7 @@ class NewAddedRowContainer(MDBoxLayout):
         self.app = Calculator
 
     def add_new_row(self, x, y, z, *args):  # x = btn, y = content counters, z = root and ids of other grid instance
-        row_count = int(y.new_quest.split(": ")[1])
+        row_count = int(y.text.split(": ")[1])
         if self.app.limit_container_rows > row_count != self.app.limit_container_rows:
             if not self.wait:
                 for text in list(args):
@@ -229,13 +227,13 @@ class NewAddedRowContainer(MDBoxLayout):
         self.wait = False
 
     def field_to_blank(self):
-        self.ids.new_item_name.new_quest = ''
-        self.ids.pad_1.new_quest = ''
-        self.ids.pad_2.new_quest = ''
-        self.ids.pad_3.new_quest = ''
-        self.ids.price_1.new_quest = ''
-        self.ids.price_2.new_quest = ''
-        self.ids.price_3.new_quest = ''
+        self.ids.new_item_name.text = ''
+        self.ids.pad_1.text = ''
+        self.ids.pad_2.text = ''
+        self.ids.pad_3.text = ''
+        self.ids.price_1.text = ''
+        self.ids.price_2.text = ''
+        self.ids.price_3.text = ''
         self.requirement_fulfil.clear()
 
     def insert(self, i, obj, data):
@@ -245,7 +243,7 @@ class NewAddedRowContainer(MDBoxLayout):
         _roll_price = data[4]
         _half_price = data[5]
         _packet_price = data[6]
-        index = int(i.new_quest.split(": ")[1]) + 1
+        index = int(i.text.split(": ")[1]) + 1
 
         self.app().db.add_new_item(
             evt_time, item_name, theme_measure,
@@ -258,7 +256,7 @@ class NewAddedRowContainer(MDBoxLayout):
         self.infor = '1 row added successful'
         Clock.schedule_once(self.fade_infor, 3)
         self.field_to_blank()
-        i.new_quest = f"Contents: {index}"
+        i.text = f"Contents: {index}"
 
         if index == self.app.limit_container_rows:
             obj.isFull = True
@@ -281,7 +279,7 @@ class NewAddedRowContainer(MDBoxLayout):
         ind.cool_grid.add_widget(ItemRows())  # home calc
         ind.cool_edit_grid.add_widget(ItemRows())  # edit screen
         ind.cool_del_grid.add_widget(ItemRows())  # delete screen
-        ind.cool_result_panel.result_text.new_quest = f"Contents: {data[8]}"
+        ind.cool_result_panel.result_text.text = f"Contents: {data[8]}"
         if self.app.catch_deleted_row_index:
             self.app.catch_deleted_row_index.remove(self.app.catch_deleted_row_index[0])
 
@@ -358,8 +356,7 @@ class TheGridLayer(MDGridLayout):
     def get_item(self, dt):
         result = self.app.db.retrieve_item()
         for i in result:
-            if self.quantity < 2:
-                self.format_and_display_items(i)
+            self.format_and_display_items(i)
 
     def format_and_display_items(self, data):
         self.quantity += 1
@@ -379,8 +376,8 @@ class TheGridLayer(MDGridLayout):
 
         self.add_widget(ItemRows())
         if self.abc:
-            self.abc[0].ids.res_cont.new_quest = "Contents: " + str(self.quantity)
-            self.abc[1].ids.content_txt.new_quest = "Contents: " + str(self.quantity)
+            self.abc[0].ids.res_cont.text = "Contents: " + str(self.quantity)
+            self.abc[1].ids.content_txt.text = "Contents: " + str(self.quantity)
 
 
 class Container(MDScreenManager):
@@ -608,7 +605,7 @@ class Calculator(MDApp):
 
     def helper_pad(self, obj):
         x = self.long_press_val[0]
-        y = int(obj.new_quest)
+        y = int(obj.text)
         i = self.btn_rep[0]
 
         if i is not None and x != 0:
@@ -743,14 +740,14 @@ class Calculator(MDApp):
                         self.db.create_pwd(pwd_txt)
                         self.remove_pwd_pop(ask_pwd_root)
                         self.root.ids.pwd_crt.is_pwd_created = True
-                        ids.crt_txt.new_quest = "Password created"
-                        ids.upd_txt.new_quest = "Update your password"
-                        ids.del_txt.new_quest = "Delete your password"
+                        ids.crt_txt.text = "Password created"
+                        ids.upd_txt.text = "Update your password"
+                        ids.del_txt.text = "Delete your password"
 
                 elif btn == 'update':
                     if check_pwd:
                         ask_pwd_root.color = [0, 1, 0, 1]
-                        ask_pwd_root.ids.pwd.new_quest = ''
+                        ask_pwd_root.ids.pwd.text = ''
                         ask_pwd_root.infor = "Create new password now"
                         ask_pwd_root.btn = "new_pwd"
                         self.old_pwd = check_pwd
@@ -762,15 +759,15 @@ class Calculator(MDApp):
                 elif btn == 'new_pwd':
                     if self.old_pwd:
                         self.db.update_pwd(self.old_pwd, pwd_txt)
-                        ids.upd_txt.new_quest = "Password updated"
-                        ids.del_txt.new_quest = "Delete your password"
+                        ids.upd_txt.text = "Password updated"
+                        ids.del_txt.text = "Delete your password"
                         self.remove_pwd_pop(ask_pwd_root)
                         self.old_pwd = None
 
                     else:
                         ask_pwd_root.color = 'red'
                         ask_pwd_root.infor = "Sorry try again"
-                        ask_pwd_root.ids.pwd.new_quest = ''
+                        ask_pwd_root.ids.pwd.text = ''
                         ask_pwd_root.btn = "new_pwd"
 
                 elif btn == 'delete':
@@ -778,9 +775,9 @@ class Calculator(MDApp):
                         self.db.delete_pwd(pwd_txt)
                         self.remove_pwd_pop(ask_pwd_root)
                         self.root.ids.pwd_crt.is_pwd_created = False
-                        ids.crt_txt.new_quest = "Create your password"
-                        ids.upd_txt.new_quest = "Update your password"
-                        ids.del_txt.new_quest = "Password deleted"
+                        ids.crt_txt.text = "Create your password"
+                        ids.upd_txt.text = "Update your password"
+                        ids.del_txt.text = "Password deleted"
                     else:
                         ask_pwd_root.color = 'red'
                         ask_pwd_root.infor = "Incorrect password"
@@ -800,7 +797,7 @@ class Calculator(MDApp):
     def is_edit_container(self, x, y, z):
         if not self.pop_opened:
             if not z:
-                if x.new_quest == 'Edit item':
+                if x.text == 'Edit item':
                     if y.current == 'add_row_scr':
                         y.transition.direction = 'left'
                         y.current = 'edit_row_scr'
@@ -810,7 +807,7 @@ class Calculator(MDApp):
                         y.current = 'edit_row_scr'
                     self.may_i_edit = True
 
-                elif x.new_quest == 'Delete':
+                elif x.text == 'Delete':
                     if y.current == 'add_row_scr' or y.current == 'edit_row_scr':
                         y.transition.direction = 'left'
                         y.current = 'del_row_scr'
@@ -879,7 +876,7 @@ class Calculator(MDApp):
                     if len(self.check_row_no) > 1 and self.check_row_no[1] != my_no:
                         btn1.parent.ids.edit_card.md_bg_color = [.1, 0, 0, .5]
                         btn2.parent.ids.edit_card.md_bg_color = \
-                            "#33d651" if card_obj.parent.ids.edit_result.new_quest == '#' else [.9, 0, 0, 1]
+                            "#33d651" if card_obj.parent.ids.edit_result.text == '#' else [.9, 0, 0, 1]
                         self.check_row_no.remove(self.check_row_no[0])
 
                     btn1.parent.is_del = False
@@ -891,7 +888,7 @@ class Calculator(MDApp):
                     card_obj.parent.is_del = True
                     self.index_of_row_to_edit_or_delete[0] = self.catch_touch_bg[0].index
                     card_obj.parent.ids.edit_card.md_bg_color = \
-                        "#33d651" if card_obj.parent.ids.edit_result.new_quest == '#' else [.9, 0, 0, 1]
+                        "#33d651" if card_obj.parent.ids.edit_result.text == '#' else [.9, 0, 0, 1]
 
                 self.reset_edit_pads()
                 self.ask_to_delete(card_obj)
@@ -913,16 +910,16 @@ class Calculator(MDApp):
         self.gather_provided_input = [0, 0, 0]
         self.provided = [0, 0, 0]
         if not self.wait:
-            if x['item_name'].new_quest:
-                self.gather_provided_input[0] = dict(name=self.space_less(x['item_name'].new_quest.capitalize()))
+            if x['item_name'].text:
+                self.gather_provided_input[0] = dict(name=self.space_less(x['item_name'].text.capitalize()))
 
-            if y['pad'].new_quest:
-                self.gather_provided_input[1] = dict(pad=self.space_less(y['pad'].new_quest.capitalize()))
+            if y['pad'].text:
+                self.gather_provided_input[1] = dict(pad=self.space_less(y['pad'].text.capitalize()))
 
-            if z['price'].new_quest:
-                if self.is_figures(z['price'].new_quest):
+            if z['price'].text:
+                if self.is_figures(z['price'].text):
                     a.is_char = False
-                    self.gather_provided_input[2] = dict(price=self.space_less(z['price'].new_quest))
+                    self.gather_provided_input[2] = dict(price=self.space_less(z['price'].text))
                 else:
                     a.is_char = True
                     self.gather_provided_input = [0, 0, 0]
@@ -941,9 +938,9 @@ class Calculator(MDApp):
                 self.wait = True
 
                 # Reset Input Field
-                x['item_name'].new_quest = ''
-                y['pad'].new_quest = ''
-                z['price'].new_quest = ''
+                x['item_name'].text = ''
+                y['pad'].text = ''
+                z['price'].text = ''
 
     def close_edit_scr(self, dt=None):
         self.edit_scr_pop('down', "edit_row_scr")
@@ -1158,19 +1155,21 @@ class Calculator(MDApp):
 
     def update(self, row, ind, mea=None, price=None):
         card = self.card_name_tobe_edited[0].my_parts
-        card[0].new_quest = str(mea) if mea else card[0].new_quest  # roll theme measurement
-        card[1].new_quest = str(price) if price else card[1].new_quest  # roll price+
+        card[0].text = str(mea) if mea else card[0].text  # roll theme measurement
+        card[1].text = str(price) if price else card[1].text  # roll price+
 
         # home calc scr
         for home_card in self.home_calc.children:
             if home_card.row == ind:
-                home_card.abc[row].my_parts[0].new_quest = str(mea) if mea else home_card.abc[row].my_parts[0].new_quest
-                home_card.abc[row].my_parts[1].new_quest = str(price) if price else home_card.abc[row].my_parts[1].new_quest
+                home_card.abc[row].my_parts[0].text = str(mea) if mea else home_card.abc[row].my_parts[0].text
+                home_card.abc[row].my_parts[1].text = str(price) if price else home_card.abc[row].my_parts[
+                    1].text
 
         for del_card in self.abc('del').children:
             if del_card.row == ind:
-                del_card.abc[row].my_parts[0].new_quest = str(mea) if mea else del_card.abc[row].my_parts[0].new_quest
-                del_card.abc[row].my_parts[1].new_quest = str(price) if price else del_card.abc[row].my_parts[1].new_quest
+                del_card.abc[row].my_parts[0].text = str(mea) if mea else del_card.abc[row].my_parts[0].text
+                del_card.abc[row].my_parts[1].text = str(price) if price else del_card.abc[row].my_parts[
+                    1].text
 
     popup = None
     catch_del_touch = []
@@ -1179,7 +1178,7 @@ class Calculator(MDApp):
         if obj not in self.catch_del_touch and not self.pop_opened:
             self.popup = self.task_scr_manager[2]
 
-            if obj.parent.ids.edit_result.new_quest != '#':
+            if obj.parent.ids.edit_result.text != '#':
                 Dialog.question = 'Do you sure you want to delete this row?'
             else:
                 Dialog.question = "Default row can't be deleted"
@@ -1192,7 +1191,7 @@ class Calculator(MDApp):
     def delete_row(self, x, pop, cmd):
         parent = self.catch_del_touch[0].parent
         if self.catch_del_touch:
-            if parent.ids.edit_result.new_quest != '#':
+            if parent.ids.edit_result.text != '#':
                 if cmd:
                     del_scr = self.abc('del')
                     children = del_scr.children
@@ -1215,11 +1214,13 @@ class Calculator(MDApp):
                                             self.task_scr_manager[0].remove_widget(edit_child)
                                             self.home_calc.remove_widget(home_child)
 
-                                            remain = int(self.root.ids.result_panel.result_text.new_quest.split(':')[1]) - 1
+                                            remain = int(
+                                                self.root.ids.result_panel.result_text.text.split(':')[1]) - 1
                                             self.task_scr_manager[3].bg_color = [0, 0, 0, .1]
                                             self.task_scr_manager[3].abc.text_color = [0, .7, 0, 1]
-                                            self.task_scr_manager[3].abc.new_quest = "Contents: " + str(remain)
-                                            self.root.ids.result_panel.result_text.new_quest = "Contents: " + str(remain)
+                                            self.task_scr_manager[3].abc.text = "Contents: " + str(remain)
+                                            self.root.ids.result_panel.result_text.text = "Contents: " + str(
+                                                remain)
 
                                             self.popup.remove_widget(pop)
                                             self.pop_opened = False
