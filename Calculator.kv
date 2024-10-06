@@ -552,7 +552,8 @@ Container:
         MDBoxLayout:
             size_hint_y: .01
             MDLabel:
-                text: app.item_list
+                text:
+                    app.item_list if self.text_color != [.7, 0, 0, 1] else "Something went wrong" if app.item_list == 'err' and self.text_color == [.7, 0, 0, 1] else "You have reached limit"
                 font_size: '11sp'
                 halign: 'center'
                 theme_text_color: "Custom"
@@ -575,8 +576,8 @@ Container:
                 size_hint_x: .9
                 pos_hint: {"center_x": .5, "center_y": .5}
                 MDLabel:
-                    text: str(app.result)
-                    font_size: '25sp'
+                    text: app.result
+                    font_size: '27sp'
                     font_name: "Font/Roboto-Bold.ttf"
                     halign: 'center'
                     theme_text_color: "Custom"
@@ -631,9 +632,9 @@ Container:
             SampleLabel:
                 text: 'Theme items measurement'
     SampleLabel:
-        text: 'Example: 1 carton, 2 half carton, 3 pieces'
+        text: 'Example: pad 1 carton, pad 2 half carton, pad 3 pieces'
         size_hint_y: .2
-        font_size: '9sp'
+        font_size: '11sp'
         text_color: [.3, 0, 0, .8]
     MDBoxLayout:
         SampleLabel:
@@ -750,6 +751,7 @@ Container:
         pos_hint: {"center_x": .5, "center_y": .5}
         SampleLabel:
             text: root.infor
+            font_size: '13sp'
             text_color: [0, .7, 0, 1] if not add_btn.missed else [.7, 0, 0, 1]
     SampleLabel:
         id: content_txt
@@ -758,13 +760,14 @@ Container:
             [0, .7, 0, 1] if int(content_txt.text.split(':')[1]) < (app.limit_container_rows) and new_row.isFull or \
             int(content_txt.text.split(':')[1]) < (app.limit_container_rows) and not new_row.isFull \
             else [.7, 0, 0, 1]
+        font_size: '11sp'
         pos_hint: {"center_x": .92, "center_y": .01}
 
 <SampleLabel@MDLabel>:
     theme_text_color: "Custom"
     text_color: 0, 0, 0, 1
     font_style: 'Caption'
-    font_size: '11sp'
+    font_size: '12sp'
     halign: 'center'
     valign: 'center'
 
@@ -783,7 +786,7 @@ Container:
             theme_icon_color: 'Custom'
             icon_color: [0, 0, .7, 1]
             pos_hint: {"center_x": .5, "center_y": .1}
-            on_release: app.close_edit_scr()
+            on_release: app.close_edit_scr([new_item_name, pad, price])
     MDBoxLayout:
         padding: 0, 10
         spacing: dp(9)
@@ -854,7 +857,7 @@ Container:
             line_color_normal: 0, 0, 0, .7
             pos_hint: {"center_x": .5, "center_y": .7}
     SampleLabel:
-        text: "Expected numbers and got characters" if c.is_char else ''
+        text: "Expected numbers and got characters" if char.is_char else ''
         size_hint_y: .2
         font_size: '9sp'
         text_color: .7, 0, 0, 1
@@ -866,7 +869,7 @@ Container:
         spacing: dp(9)
         orientation: 'vertical'
         MDCard:
-            id: c
+            id: char
             is_char: False
             padding: add_box.width / 2.3, 10
             radius: [5, 5, 5, 5]
@@ -969,6 +972,7 @@ Container:
                 SampleLabel:
                     text: 'Password'
                     font_size: '11sp'
+                    text_color: [0, 0, 0, .7]
                     font_name: "Font/Merienda-Black.ttf"
     MDBoxLayout:
         padding: 10, 0
@@ -1032,7 +1036,7 @@ Container:
     MDBoxLayout:
         pos_hint: {"center_y": .25}
         SampleLabel:
-            text: 'On Loading ...'
+            text: 'is Loading ...'
             text_color: [0, 0, .9, 1]
             font_size: '17sp'
             font_name: "Font/DancingScript-VariableFont_wght.ttf"
@@ -1314,10 +1318,10 @@ Container:
             icon: 'close-circle-multiple-outline'
             icon_size: '25sp'
             theme_icon_color: 'Custom'
-            icon_color: 'black'
+            icon_color: 'black' if (root.count_ques == 5) or (root.count_ques == 0) else [1, 1, 1, .5]
             pos_hint: {'center_y': .5}
             on_release:
-                app.back_to_setting_screen('right', 'app_content') if root.count_ques == 5 else ''
+                app.back_to_setting_screen('right', 'app_content') if (root.count_ques == 5) or (root.count_ques == 0) else ''
         MDCard:
             radius: [100, 100]
             size_hint: None, None
@@ -1336,8 +1340,9 @@ Container:
         spacing: dp(10)
         SampleLabel:
             text: root.infor
-            font_size: '11sp'
+            font_size: '12sp'
             halign: 'left'
+            text_color: [0.37, 0, 0, 1]
             font_name: "Font/Merienda-Light.ttf"
         MDRelativeLayout:
             md_bg_color: [1, 1, 1, .3] if root.question else '#e2cbf2'
@@ -1352,19 +1357,21 @@ Container:
             size_hint: .5, .5
             pos_hint: {'center_x': .5}
             MDFlatButton:
-                text: 'True'
+                text: 'Yes'
                 theme_text_color: 'Custom'
-                text_color: [0, .7, 0, 1]
+                text_color: [0, .77, 0, 1]
                 md_bg_color: [1, 1, 1, .3]
+                bold: True
                 font_size: '12sp'
                 pos_hint: {'center_x': .2}
                 font_name: "Font/Merienda-Light.ttf"
                 on_release: root.answer(True)
             MDFlatButton:
-                text: 'False'
+                text: 'No'
                 theme_text_color: 'Custom'
-                text_color: [.7, 0, 0, 1]
+                text_color: [.77, 0, 0, 1]
                 md_bg_color: [1, 1, 1, .3]
+                bold: True
                 font_size: '12sp'
                 pos_hint: {'center_x': .8}
                 font_name: "Font/Merienda-Light.ttf"

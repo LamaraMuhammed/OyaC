@@ -1,3 +1,8 @@
+'''
+Kivy --version = 2.3.0
+Kivymd --version = 1.2.0
+'''
+
 import re
 from datetime import (datetime, date)
 
@@ -10,25 +15,19 @@ from kivymd.uix.card import MDCard
 from kivymd.uix.gridlayout import MDGridLayout
 from kivymd.uix.behaviors import ScaleBehavior
 from kivymd.uix.screen import MDScreen
-from kivy.uix.screenmanager import (CardTransition, SlideTransition, FadeTransition, FallOutTransition)
+from kivy.uix.screenmanager import (CardTransition, SlideTransition)
 from kivy.properties import (StringProperty, NumericProperty, BooleanProperty, ColorProperty)
 from kivymd.utils.set_bars_colors import set_bars_colors
 
 from kivymd.uix.screenmanager import MDScreenManager
-from db import DB
+from OyaC_db import DB
 
 Window.size = (350, 680)
 
-'''
-Kivy --version = 2.3.0
-Kivymd --version = 1.2.0
-mysql-connector-python --version = 8.0.33
-'''
-
 
 class ForgotPassword(MDBoxLayout):
-    infor = StringProperty('Answer the following questions to be able to recover your password.')
-    question = StringProperty('Default question')
+    infor = StringProperty('Answer the following questions correctly to recover your password.')
+    question = StringProperty('Did you ever add new item in this week?')
     count_ques = NumericProperty(5)
     true = None
     false = None
@@ -49,7 +48,7 @@ class ForgotPassword(MDBoxLayout):
 
     def new_quest(self, dt):
         if self.count_ques == 4:
-            self.question = '4'
+            self.question = '40'
         elif self.count_ques == 3:
             self.question = '3'
         elif self.count_ques == 2:
@@ -98,7 +97,7 @@ class PasswordCreation(MDBoxLayout):
     def update_pwd(self, btn):
         if self.is_pwd_created:
             self.change_bg_color(btn)
-            self.ask_pwd('Insert your previous password to update', 'update')
+            self.ask_pwd('Insert your current password', 'update')
 
     def delete_pwd(self, btn):
         if self.is_pwd_created:
@@ -148,7 +147,7 @@ class CheckPassword(MDBoxLayout):
                 Container.count_on_no_pwd_entrance = 0
             else:
                 self.attempt_count += 1
-                if self.attempt_count <= 1:
+                if self.attempt_count <= 5:
                     self.color = 'red'
                     self.infor = "Incorrect password!"
                 else:
@@ -220,7 +219,7 @@ class NewAddedRowContainer(MDBoxLayout):
             self.infor = 'You have reached the free limit'
             Clock.schedule_once(self.fade_infor, 5)
 
-        self.reset_pads(z)
+        self.reset_pads_input(z)
 
     def fade_infor(self, dt):
         self.infor = ''
@@ -283,7 +282,7 @@ class NewAddedRowContainer(MDBoxLayout):
         if self.app.catch_deleted_row_index:
             self.app.catch_deleted_row_index.remove(self.app.catch_deleted_row_index[0])
 
-    def reset_pads(self, pad):
+    def reset_pads_input(self, pad):
         for edit_row in pad.cool_edit_grid.children:
             edit_row.ids.edit_card.md_bg_color = [.1, 0, 0, .5]
             edit_row.abc[0].isedit = False
@@ -356,7 +355,8 @@ class TheGridLayer(MDGridLayout):
     def get_item(self, dt):
         result = self.app.db.retrieve_item()
         for i in result:
-            self.format_and_display_items(i)
+            if self.quantity >= 0:
+                self.format_and_display_items(i)
 
     def format_and_display_items(self, data):
         self.quantity += 1
@@ -454,8 +454,8 @@ class Container(MDScreenManager):
             txt = "You have to create a password for your items security, this will prevent " \
                   "any abrupt or unauthorised addition, edition or deletion of any of your items."
         else:
-            txt = '[color=#CB37CC]Hey! you[/color], password is recommended for your items safety,' \
-                  '[color=#CB37CC] please create password[/color] to avoid any frustration.'
+            txt = 'Hi once again, password is recommended for your items safety,' \
+                  '[color=#CB37CC] please create password[/color] to avoid any kind of frustration.'
 
         check_pwd = CheckPassword()
         check_pwd.infor = txt
@@ -466,9 +466,8 @@ class Container(MDScreenManager):
 class Calculator(MDApp):
     title = 'OyaC'
 
-    default_row = 11
     limit_container_rows = 36
-    calc_limit_count_numbers = 9
+    calc_limit_count_numbers = 99999999999
     quantity_count = 0
     press_time = 0
     inc = 0
@@ -479,21 +478,22 @@ class Calculator(MDApp):
     identical = []
     catch_touch = []
     catch_deleted_row_index = []
+    long_press_btn = [None]
     long_press_val = [0]
     index_of_row_to_edit_or_delete = [0]
-    btn_rep = [None]
     focus_btn = [None]
 
     row = NumericProperty()
-    result = NumericProperty(0)
     result_color = ColorProperty([0, 0, 0, .7])
     result_bg_color = ColorProperty("#a5c4db")
+    result = StringProperty('0')
     item_list = StringProperty("Selected items: 0")
     item_list_color = ColorProperty([0, 0, 0, .8])
 
     is_edit_or_del_container = BooleanProperty(False)
     may_i_edit = BooleanProperty(False)
     pop_opened = BooleanProperty(False)
+    stop_count = BooleanProperty(False)
 
     home_calc = None
     task_scr_manager = None
@@ -535,8 +535,7 @@ class Calculator(MDApp):
             self.mute_helper_pad_obj()  # if called helper_pad won't work
 
     def press_identifier(self, obj, press_down):
-        res_len = len(str(self.result))
-        if res_len <= self.calc_limit_count_numbers:
+        if not self.stop_count:
             _price = int(obj.price)
             _qnt = int(obj.quantity)
 
@@ -546,15 +545,61 @@ class Calculator(MDApp):
                 self.do_math(obj, _price, _qnt)
             else:
                 self.long_press_val[0] = _price
-                self.btn_rep[0] = obj
+                self.long_press_btn[0] = obj
 
+    def _sum_all(self, price):
+        if not self.stop_count:
+            prev_total = self.remove_comma(self.result)
+            total = int(prev_total) + price if self.result != '0' else price
+
+            if total <= self.calc_limit_count_numbers:
+                self.result = self.put_comma(total)
+            else:
+                self.result_color = [.7, 0, 0, 1]
+                self.item_list_color = [.7, 0, 0, 1]
+                self.stop_count = True
+                self.result = self.put_comma(total)
+
+    def put_comma(self, number):
+        num = str(number)
+        num_len = len(self.remove_comma(num))
+        if num_len < 4:
+            return num
+        elif num_len == 4:
+            return num[:1] + ',' + num[1:]
+        elif num_len == 5:
+            return num[:2] + ',' + num[2:]
+        elif num_len == 6:
+            return num[:3] + ',' + num[3:]
+        elif num_len == 7:
+            return num[:1] + ',' + num[1:][:3] + ',' + num[1:][3:]
+        elif num_len == 8:
+            return num[:2] + ',' + num[2:][:3] + ',' + num[2:][3:]
+        elif num_len == 9:
+            return num[:3] + ',' + num[3:][:3] + ',' + num[3:][3:]
+        elif num_len == 10:
+            return num[:1] + ',' + num[1:][:3] + ',' + num[1:][6:] + ',' + num[1:][6:]
+        elif num_len == 11:
+            return num[:2] + ',' + num[2:][:3] + ',' + num[2:][6:] + ',' + num[2:][6:]
+
+    def remove_comma(self, num):  # return value is str
+        if num != 0 and ',' in str(num):
+            gathered_num = list()
+            try:
+                for n in num:
+                    if n != ',':
+                        gathered_num.append(n)
+                return ''.join(gathered_num)
+            except Exception:
+                self.stop_count = True
+                self.result_color = [.7, 0, 0, 1]
+                self.item_list_color = [.7, 0, 0, 1]
+                self.item_list = "err"
+                print('Wrong')
+                Clock.schedule_once(self.reset_everything_on_current_window, 7)
+                return True
         else:
-            self.item_list = "You have reached limit"
-            self.result_color = [.7, 0, 0, 1]
-            self.item_list_color = [.7, 0, 0, 1]
-
-    def _sum_all(self, x):
-        self.result = self.result + x if self.result != 0 else x
+            return str(num)
 
     def check_row(self, obj):
         if obj is not None:
@@ -570,15 +615,15 @@ class Calculator(MDApp):
             row = self.check_row(obj)
             if row == 1 and obj.roll_count > 0:
                 obj.roll_count = obj.roll_count - 1
-                self.result = self.result - int(obj.price)
+                self.result = self.put_comma(self.parse_result() - int(obj.price))
 
             elif row == 2 and obj.half_roll_count > 0:
                 obj.half_roll_count = obj.half_roll_count - 1
-                self.result = self.result - int(obj.price)
+                self.result = self.put_comma(self.parse_result() - int(obj.price))
 
             elif row == 3 and obj.packet_count > 0:
                 obj.packet_count = obj.packet_count - 1
-                self.result = self.result - int(obj.price)
+                self.result = self.put_comma(self.parse_result() - int(obj.price))
 
             self.subtract_selected_item(obj, 'one')
 
@@ -587,7 +632,7 @@ class Calculator(MDApp):
             total_count_of_del_item = 0
             row = self.check_row(obj)
             obj.price = int(obj.price)
-            if self.result != 0:
+            if self.parse_result() != 0:
                 if row == 1:
                     total_count_of_del_item = obj.price * int(obj.roll_count)
                     obj.roll_count = 0
@@ -600,41 +645,44 @@ class Calculator(MDApp):
                     total_count_of_del_item = obj.price * int(obj.packet_count)
                     obj.packet_count = 0
 
-                self.result = self.result - total_count_of_del_item
+                self.result = self.put_comma((self.parse_result() - total_count_of_del_item))
                 self.subtract_selected_item(obj, 'all')
 
     def helper_pad(self, obj):
-        x = self.long_press_val[0]
+        val = self.long_press_val[0]
         y = int(obj.text)
-        i = self.btn_rep[0]
+        pad_btn = self.long_press_btn[0]
 
-        if i is not None and x != 0:
-            total = x * y
-            self.do_helper_pad_math(i, total, y)
+        if pad_btn is not None and val != 0 and not self.stop_count:
+            total = val * y
+            self.do_helper_pad_math(pad_btn, total, y)
 
-    def do_helper_pad_math(self, _id, x, y):
-        if _id.index.endswith('roll'):
-            self._sum_all(x)
-            _id.roll_count = y if _id.roll_count == '0' else int(_id.roll_count) + y
+    def do_helper_pad_math(self, obj, price, quant):
+        if self.check_row(obj) == 1:
+            self._sum_all(price)
+            obj.roll_count = quant if obj.roll_count == '0' else int(obj.roll_count) + quant
 
-        elif _id.index.endswith('packet'):
-            self._sum_all(x)
-            _id.packet_count = y if _id.packet_count == '0' else int(_id.packet_count) + y
+        elif self.check_row(obj) == 3:
+            self._sum_all(price)
+            obj.packet_count = quant if obj.packet_count == '0' else int(obj.packet_count) + quant
 
-        self.count_selected_item(_id)
+        self.count_selected_item(obj)
 
-    def do_math(self, obj, x, y):
-        if obj.index.endswith('roll'):
-            self._sum_all(x)
+    def parse_result(self):
+        return int(self.remove_comma(self.result))
+
+    def do_math(self, obj, price, quant):
+        if self.check_row(obj) == 1:
+            self._sum_all(price)
             obj.roll_count = self.quantity_count
 
-        elif obj.index.endswith('half'):
-            if y <= 1:
-                self._sum_all(x)
+        elif self.check_row(obj) == 2:
+            if quant <= 1:
+                self._sum_all(price)
                 obj.half_roll_count = self.quantity_count
 
-        elif obj.index.endswith('packet'):
-            self._sum_all(x)
+        elif self.check_row(obj) == 3:
+            self._sum_all(price)
             obj.packet_count = self.quantity_count
 
         self.count_selected_item(obj)
@@ -655,6 +703,13 @@ class Calculator(MDApp):
                 self.surrender(c, q)
             elif row == 3 and c.packet_count == 0:
                 self.surrender(c, q)
+            self.resolve_calc_limit_count_numbers()
+
+    def resolve_calc_limit_count_numbers(self):
+        if int(self.remove_comma(self.result)) < self.calc_limit_count_numbers:
+            self.result_color = [0, 0, 0, .7]
+            self.item_list_color = [0, 0, 0, .8]
+            self.stop_count = False
 
     def surrender(self, x, q):
         ind = x.index.split('-')[0]
@@ -665,7 +720,7 @@ class Calculator(MDApp):
         if q == 'one':
             self.focus_btn[0] = None
         elif q == 'all':
-            self.btn_rep[0] = None
+            self.long_press_btn[0] = None
 
         if self.identical.count(ind) == 0:
             self.inc -= 1
@@ -688,22 +743,23 @@ class Calculator(MDApp):
                     self.identical.append(split_ind)
 
     def delete_current(self):
-        if self.focus_btn[0] is not None and self.btn_rep[0] is None:
+        if self.focus_btn[0] is not None and self.long_press_btn[0] is None:
             self.subtract(self.focus_btn[0])
 
     def delete_specific(self):
-        if self.btn_rep[0] is not None:
-            self.subtract_all(self.btn_rep[0])
+        if self.long_press_btn[0] is not None:
+            self.subtract_all(self.long_press_btn[0])
 
     def mute_helper_pad_obj(self):
         self.long_press_val[0] = 0
-        self.btn_rep[0] = None
+        self.long_press_btn[0] = None
 
-    def reset_everything_on_current_window(self):
-        self.result = 0
+    def reset_everything_on_current_window(self, dt=None):
+        self.result = '0'
         self.inc = 0
         self.item_list = "Selected items: 0"
         self.mute_helper_pad_obj()
+        self.resolve_calc_limit_count_numbers()
         for obj in self.obj_ids:
             self.quantity_count = 0
             if obj.index.endswith('roll'):
@@ -718,7 +774,7 @@ class Calculator(MDApp):
         self.is_the_all_row_selected.clear()
         self.identical.clear()
         self.long_press_val[0] = 0
-        self.btn_rep[0] = None
+        self.long_press_btn[0] = None
         self.focus_btn[0] = None
 
     def back_to_setting_screen(self, direction, scr_name):
@@ -738,6 +794,7 @@ class Calculator(MDApp):
                 if btn == 'create':
                     if not check_pwd:
                         self.db.create_pwd(pwd_txt)
+                        ask_pwd_root.ids.pwd.text = ''
                         self.remove_pwd_pop(ask_pwd_root)
                         self.root.ids.pwd_crt.is_pwd_created = True
                         ids.crt_txt.text = "Password created"
@@ -748,7 +805,7 @@ class Calculator(MDApp):
                     if check_pwd:
                         ask_pwd_root.color = [0, 1, 0, 1]
                         ask_pwd_root.ids.pwd.text = ''
-                        ask_pwd_root.infor = "Create new password now"
+                        ask_pwd_root.infor = "Create new password"
                         ask_pwd_root.btn = "new_pwd"
                         self.old_pwd = check_pwd
 
@@ -759,6 +816,7 @@ class Calculator(MDApp):
                 elif btn == 'new_pwd':
                     if self.old_pwd:
                         self.db.update_pwd(self.old_pwd, pwd_txt)
+                        ask_pwd_root.ids.pwd.text = ''
                         ids.upd_txt.text = "Password updated"
                         ids.del_txt.text = "Delete your password"
                         self.remove_pwd_pop(ask_pwd_root)
@@ -773,6 +831,7 @@ class Calculator(MDApp):
                 elif btn == 'delete':
                     if check_pwd:
                         self.db.delete_pwd(pwd_txt)
+                        ask_pwd_root.ids.pwd.text = ''
                         self.remove_pwd_pop(ask_pwd_root)
                         self.root.ids.pwd_crt.is_pwd_created = False
                         ids.crt_txt.text = "Create your password"
@@ -945,6 +1004,10 @@ class Calculator(MDApp):
     def close_edit_scr(self, dt=None):
         self.edit_scr_pop('down', "edit_row_scr")
         self.wait = False
+
+        if isinstance(dt, list):
+            for ele in dt:
+                ele.text = ''
 
     def reset_edit_pads(self, alt=None):
         for row in self.abc('edit', alt).children:

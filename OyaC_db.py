@@ -1,3 +1,7 @@
+'''
+mysql-connector-python --version = 8.0.33
+'''
+
 import mysql.connector
 
 
