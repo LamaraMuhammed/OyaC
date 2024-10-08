@@ -1,7 +1,7 @@
-'''
+"""
 Kivy --version = 2.3.0
 Kivymd --version = 1.2.0
-'''
+"""
 
 import re
 from datetime import (datetime, date)
@@ -118,9 +118,8 @@ class PasswordCreation(MDBoxLayout):
             self.ids.delete_btn.md_bg_color = clr
 
     def check_pwd(self):
-        res = self.db.get_pwd(0)
         self.bg_color([1, 1, 1, .9])
-        if res:
+        if self.db.get_pwd():
             self.create = "Password created"
             self.is_pwd_created = True
 
@@ -158,8 +157,7 @@ class CheckPassword(MDBoxLayout):
                     root.ids.ok_btn.icon = "arrow-right"
 
         if skip_on_no_pwd:
-            res = self.db.get_pwd(0)
-            if not res:  # this is in case of root widget refused to remove skip btn
+            if not self.db.get_pwd():  # this is in case of root widget refused to remove skip btn
                 root.parent.parent.goto_home = True
                 root.parent.remove_widget(root)
                 Calculator.pop_opened = False
@@ -355,7 +353,7 @@ class TheGridLayer(MDGridLayout):
     def get_item(self, dt):
         result = self.app.db.retrieve_item()
         for i in result:
-            if self.quantity >= 0:
+            if self.quantity >= 20:
                 self.format_and_display_items(i)
 
     def format_and_display_items(self, data):
@@ -434,7 +432,7 @@ class Container(MDScreenManager):
         Calculator.pop_opened = True
         self.goto_home = False
 
-        if Calculator.db.get_pwd(0):
+        if Calculator.db.get_pwd():
             if len(scr.children) > 1:
                 scr.remove_widget(scr.children[0])
 
@@ -815,7 +813,7 @@ class Calculator(MDApp):
 
                 elif btn == 'new_pwd':
                     if self.old_pwd:
-                        self.db.update_pwd(self.old_pwd, pwd_txt)
+                        self.db.update_pwd(self.old_pwd[0], pwd_txt)
                         ask_pwd_root.ids.pwd.text = ''
                         ids.upd_txt.text = "Password updated"
                         ids.del_txt.text = "Delete your password"
@@ -1125,7 +1123,7 @@ class Calculator(MDApp):
 
         elif val[0] != 0 and val[1] == 0 and val[2] == 0:  # ================== 1
             self.update_item_name(parent_scr, row_id, val[0])
-            values = (val[0], row_id)
+            values = (val[0], db_index)
 
             query = "UPDATE Oya_Item SET item_name = %s WHERE event_time = %s"
             self.db.update_item(query, values)
