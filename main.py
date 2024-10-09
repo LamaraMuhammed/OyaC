@@ -4,6 +4,7 @@ Kivymd --version = 1.2.0
 """
 
 import re
+import time
 from datetime import (datetime, date)
 
 from kivy.core.window import Window
@@ -20,7 +21,7 @@ from kivy.properties import (StringProperty, NumericProperty, BooleanProperty, C
 from kivymd.utils.set_bars_colors import set_bars_colors
 
 from kivymd.uix.screenmanager import MDScreenManager
-from OyaC_db import DB
+from OyaC_database import DB
 
 Window.size = (350, 680)
 
@@ -260,22 +261,22 @@ class NewAddedRowContainer(MDBoxLayout):
 
     def display_newly_added(self, data, ind):
         self.app.row = self.app.catch_deleted_row_index[0] if self.app.catch_deleted_row_index else data[8]
-        ItemRows.evt_time = data[0]
-        ItemRows.my_edit_card = "*"
+        DefaultLayout.evt_time = data[0]
+        DefaultLayout.my_edit_card = "*"
 
-        ItemRows.itemName = data[1]
-        ItemRows.theme_measure_1 = data[2]
-        ItemRows.rollPrice = data[5]
+        DefaultLayout.itemName = data[1]
+        DefaultLayout.theme_measure_1 = data[2]
+        DefaultLayout.rollPrice = data[5]
 
-        ItemRows.theme_measure_2 = data[3]
-        ItemRows.halfPrice = data[6]
+        DefaultLayout.theme_measure_2 = data[3]
+        DefaultLayout.halfPrice = data[6]
 
-        ItemRows.theme_measure_3 = data[4]
-        ItemRows.packetPrice = data[7]
+        DefaultLayout.theme_measure_3 = data[4]
+        DefaultLayout.packetPrice = data[7]
 
-        ind.cool_grid.add_widget(ItemRows())  # home calc
-        ind.cool_edit_grid.add_widget(ItemRows())  # edit screen
-        ind.cool_del_grid.add_widget(ItemRows())  # delete screen
+        ind.cool_grid.add_widget(DefaultLayout())  # home calc
+        ind.cool_edit_grid.add_widget(DefaultLayout())  # edit screen
+        ind.cool_del_grid.add_widget(DefaultLayout())  # delete screen
         ind.cool_result_panel.result_text.text = f"Contents: {data[8]}"
         if self.app.catch_deleted_row_index:
             self.app.catch_deleted_row_index.remove(self.app.catch_deleted_row_index[0])
@@ -325,7 +326,25 @@ class Card(MDCard, ScaleBehavior):
         self.scale_value_y = 1
 
 
-class ItemRows(MDBoxLayout):
+class CustomLayout(MDBoxLayout):
+    evt_time = StringProperty()
+    my_name_a = StringProperty()
+    my_name_b = StringProperty()
+    my_name_c = StringProperty()
+
+    theme_measure_1 = StringProperty()
+    theme_measure_2 = StringProperty()
+    theme_measure_3 = StringProperty()
+
+    rollPrice = NumericProperty()
+    halfPrice = NumericProperty()
+    packetPrice = NumericProperty()
+
+    my_edit_card = StringProperty()
+
+
+
+class DefaultLayout(MDBoxLayout):
     evt_time = StringProperty()
     itemName = StringProperty()
 
@@ -350,29 +369,29 @@ class TheGridLayer(MDGridLayout):
         self.ripple_color = "c7c7c7"
         Clock.schedule_once(self.get_item, 2.5)
 
-    def get_item(self, dt):
+    def get_item(self, dt=None):
         result = self.app.db.retrieve_item()
         for i in result:
-            if self.quantity >= 20:
+            if self.quantity <= 2:
                 self.format_and_display_items(i)
 
     def format_and_display_items(self, data):
         self.quantity += 1
         self.app.row = self.quantity
-        ItemRows.evt_time = data[0]
-        ItemRows.itemName = 'P-name'  # data[1]
-        ItemRows.theme_measure_1 = data[2]
-        ItemRows.rollPrice = data[5]
+        DefaultLayout.evt_time = data[0]
+        DefaultLayout.itemName = 'P-name'  # data[1]
+        DefaultLayout.theme_measure_1 = data[2]
+        DefaultLayout.rollPrice = data[5]
 
-        ItemRows.theme_measure_2 = data[3]
-        ItemRows.halfPrice = data[6]
+        DefaultLayout.theme_measure_2 = data[3]
+        DefaultLayout.halfPrice = data[6]
 
-        ItemRows.theme_measure_3 = data[4]
-        ItemRows.packetPrice = data[7]
+        DefaultLayout.theme_measure_3 = data[4]
+        DefaultLayout.packetPrice = data[7]
 
-        ItemRows.my_edit_card = data[8]
+        DefaultLayout.my_edit_card = data[8]
 
-        self.add_widget(ItemRows())
+        self.add_widget(DefaultLayout())
         if self.abc:
             self.abc[0].ids.res_cont.text = "Contents: " + str(self.quantity)
             self.abc[1].ids.content_txt.text = "Contents: " + str(self.quantity)
@@ -516,6 +535,37 @@ class Calculator(MDApp):
             self.theme_cls.primary_color,  # navigation bar color
             icons_color="Light",
         )
+
+    def revert_to_default(self):
+        pass
+
+    def revert_to_custom(self):
+        Clock.schedule_once(self.remove_widget, 1)
+
+    def remove_widget(self, dt):
+        self.home_calc.clear_widgets()
+        self.row = 0
+        Clock.schedule_once(self.do_layer, 7)
+
+    def do_layer(self, dt):
+        for data in self.db.retrieve_item():
+            self.row += 1
+            DefaultLayout.evt_time = data[0]
+            DefaultLayout.itemName = data[1]
+            DefaultLayout.theme_measure_1 = data[2]
+            DefaultLayout.rollPrice = data[5]
+
+            DefaultLayout.theme_measure_2 = data[3]
+            DefaultLayout.halfPrice = data[6]
+
+            DefaultLayout.theme_measure_3 = data[4]
+            DefaultLayout.packetPrice = data[7]
+
+            DefaultLayout.my_edit_card = data[8]
+
+            self.home_calc.add_widget(DefaultLayout())
+            print(self.row)
+            time.sleep(1)
 
     # Calc Operation
     def on_press(self, obj):
@@ -774,6 +824,7 @@ class Calculator(MDApp):
         self.long_press_val[0] = 0
         self.long_press_btn[0] = None
         self.focus_btn[0] = None
+        self.revert_to_custom()
 
     def back_to_setting_screen(self, direction, scr_name):
         self.root.transition = SlideTransition()

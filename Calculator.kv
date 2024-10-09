@@ -353,7 +353,7 @@ Container:
         app.on_release(self)
         root.scale_up()
 
-<ItemRows>:
+<DefaultLayout>:
     id: item_rows
     evt_time: root.evt_time
     row: app.row
@@ -586,6 +586,189 @@ Container:
                 size_hint_x: .1
         MDWidget:
             size_hint_y: .01
+
+<CustomLayout>:
+    id: item_rows
+    evt_time: root.evt_time
+    row: app.row
+    color: '#a35bd4'
+    spacing: dp(3)
+    abc: [roll, half_roll, packet]
+    item_names: None
+    is_del: False
+    Card:
+        id: roll
+        index: str(item_rows.row) + '-roll'
+        price: _roll_price.text
+        quantity: _roll_qnt.text
+        roll_count: 0
+        isedit: False
+        my_parts: [roll_mea, _roll_price]
+        md_bg_color:
+            "#33d651" if roll.roll_count > 0 or roll.isedit else [.9, 0, 0, 1] if \
+            item_rows.is_del and edit_result.text is '*' else "#33d651" if item_rows.is_del and \
+            edit_result.text is '#' else item_rows.color
+        MDBoxLayout:
+            orientation: 'vertical'
+            padding: 0, 10
+            MDLabel:
+                text: root.my_name_a
+                theme_text_color: "Custom"
+                text_color: 0, 0, 0, 1
+                font_style: 'H6'
+                halign: 'center'
+                valign: 'center'
+                font_size: '12sp'
+            MDLabel:
+                id: _roll_price
+                text: str(root.rollPrice)
+                theme_text_color: "Custom"
+                text_color: 0, 0, 0, 1
+                font_style: 'Caption'
+                halign: 'center'
+                valign: 'center'
+                font_size: '11sp'
+            MDBoxLayout:
+                padding: self.width / 12, 0
+                MDLabel:
+                    id: roll_mea
+                    text: root.theme_measure_1
+                    theme_text_color: "Custom"
+                    text_color: 0, 0, 0, 1
+                    font_style: 'Caption'
+                    font_size: '9sp'
+                    halign: 'center'
+                    valign: 'center'
+                MDLabel:
+                    id: _roll_qnt
+                    text: str(roll.roll_count)
+                    theme_text_color: "Custom"
+                    text_color: "#000000"
+                    font_style: 'Caption'
+                    font_size: '9sp'
+                    halign: 'center'
+                    valign: 'center'
+
+    Card:
+        id: half_roll
+        index: str(item_rows.row) + '-half'
+        price: _half_roll_price.text
+        quantity: _half_roll_qnt.text
+        half_roll_count: 0
+        isedit: False
+        my_parts: [half_roll_mea, _half_roll_price]
+        md_bg_color:
+            "#33d651" if half_roll.half_roll_count > 0 or half_roll.isedit else [.9, 0, 0, 1] if \
+            item_rows.is_del and edit_result.text is '*' else "#33d651" if item_rows.is_del and \
+            edit_result.text is '#' else item_rows.color
+        MDBoxLayout:
+            orientation: 'vertical'
+            padding: 0, 10
+            MDLabel:
+                text: root.my_name_b
+                theme_text_color: "Custom"
+                text_color: 0, 0, 0, 1
+                font_style: 'H6'
+                halign: 'center'
+                valign: 'center'
+                font_size: '12sp'
+            MDLabel:
+                id: _half_roll_price
+                text: str(root.halfPrice)
+                theme_text_color: "Custom"
+                text_color: [0, 0, 0, 1] if half_roll.half_roll_count < 2 else [.7, 0, 0, 1]
+                font_style: 'Caption'
+                halign: 'center'
+                valign: 'center'
+                font_size: '11sp'
+            MDBoxLayout:
+                padding: self.width / 11, 0
+                MDLabel:
+                    id: half_roll_mea
+                    text: root.theme_measure_2
+                    theme_text_color: "Custom"
+                    text_color: [0, 0, 0, 1] if half_roll.half_roll_count < 2 else [.7, 0, 0, 1]
+                    font_style: 'Caption'
+                    font_size: '9sp'
+                    halign: 'center'
+                    valign: 'center'
+                MDLabel:
+                    id: _half_roll_qnt
+                    text: str(half_roll.half_roll_count)
+                    theme_text_color: "Custom"
+                    text_color: [0, 0, 0, 1] if half_roll.half_roll_count < 2 else [.7, 0, 0, 1]
+                    font_style: 'Caption'
+                    font_size: '9sp'
+                    halign: 'center'
+                    valign: 'center'
+    Card:
+        id: packet
+        index: str(item_rows.row) + '-packet'
+        price: _packet_price.text
+        quantity: _packet_qnt.text
+        packet_count: 0
+        isedit: False
+        my_parts: [_packet_mea, _packet_price]
+        md_bg_color:
+            "#33d651" if packet.packet_count > 0 or packet.isedit else [.9, 0, 0, 1] if \
+            item_rows.is_del and edit_result.text is '*' else "#33d651" if item_rows.is_del and \
+            edit_result.text is '#' else item_rows.color
+        MDBoxLayout:
+            orientation: 'vertical'
+            padding: 0, 10
+            MDLabel:
+                text: root.my_name_c
+                theme_text_color: "Custom"
+                text_color: 0, 0, 0, 1
+                font_style: 'H6'
+                halign: 'center'
+                valign: 'center'
+                font_size: '12sp'
+            MDLabel:
+                id: _packet_price
+                text: str(root.packetPrice)
+                theme_text_color: "Custom"
+                text_color: 0, 0, 0, 1
+                font_style: 'Caption'
+                halign: 'center'
+                valign: 'center'
+                font_size: '11sp'
+            MDBoxLayout:
+                padding: self.width / 7, 0
+                MDLabel:
+                    id: _packet_mea
+                    text: root.theme_measure_3
+                    theme_text_color: "Custom"
+                    text_color: 0, 0, 0, 1
+                    font_style: 'Caption'
+                    font_size: '9sp'
+                    halign: 'center'
+                    valign: 'center'
+                MDLabel:
+                    id: _packet_qnt
+                    text: str(packet.packet_count)
+                    theme_text_color: "Custom"
+                    text_color: 0, 0, 0, 1
+                    font_style: 'Caption'
+                    font_size: '9sp'
+                    halign: 'center'
+                    valign: 'center'
+    MDRelativeLayout:
+        size_hint_x: .4
+        MDCard:
+            id: edit_card
+            size_hint: .67, .5
+            pos_hint: {"center_x": .6, "center_y": .55}
+            md_bg_color: [.1, 0, 0, .5]
+            elevation: 0
+            rounded_button: True
+            radius: [100, 100]
+            SampleLabel:
+                id: edit_result
+                text: str(root.my_edit_card)
+                text_color: [1, 1, 1, 1]
+                font_size: '12sp'
+
 
 <NewAddedRowContainer>:
     id: new_row
