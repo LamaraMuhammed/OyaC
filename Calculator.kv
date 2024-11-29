@@ -558,7 +558,7 @@ Container:
                 font_size: '11sp'
                 halign: 'center'
                 theme_text_color: "Custom"
-                text_color: 0, 0, 0, .8
+                text_color: 'green'
             MDWidget:
                 size_hint_x: .1
         MDBoxLayout:
@@ -670,6 +670,7 @@ Container:
         MDCard:
             id: add_btn
             missed: True
+            count_me: 0
             padding: dp(10), dp(10)
             radius: [5, 5, 5, 5]
             md_bg_color: 'green'
@@ -680,7 +681,7 @@ Container:
             on_release:
                 root.add_new_row(content_txt, \
                 [new_item_name.text, pad_1.text, pad_2.text, pad_3.text], \
-                [price_1, price_2, price_3])
+                [price_1, price_2, price_3]) if not root.isFull else app.forgot_password(self)
             SampleLabel:
                 text: 'Add'
                 text_color: [1, 1, 1, 1]
@@ -1080,10 +1081,11 @@ Container:
                         pos_hint: {'center_y': .5}
         MDBoxLayout:
             id: yes_pwd
+            padding: dp(14), 0
             size_hint_x: .9
             pos_hint: {"center_x": .5}
             MDCard:
-                md_bg_color: 0, .3, 0, .9
+                md_bg_color: 0, .5, 0, .9
                 size_hint_y: .3
                 shadow_softness: 2
                 shadow_offset: (1.5, -1.5)
@@ -1118,6 +1120,8 @@ Container:
                         icon: 'check'
                         md_bg_color: 0, .7, 0, .7
                         icon_size: '20sp'
+                        theme_icon_color: 'Custom'
+                        icon_color: 'white'
                         pos_hint: {'center_x': .5, 'center_y': .5}
                         on_release:
                             root.match_password(pwd.text, root) if self.icon == 'check' else app.forgot_password()
@@ -1253,7 +1257,7 @@ Container:
         MDWidget:
             size_hint_y: .9
 <AskPassword>:
-    padding: dp(20), dp(30)
+    padding: dp(30), dp(30)
     on_touch_down: root.dismiss_me()
     MDCard:
         md_bg_color: 'grey'
@@ -1266,7 +1270,7 @@ Container:
             MDCard:
                 on_press: root.cancel_dismiss()
                 on_release: root.cancel_dismiss()
-                md_bg_color: 0, .3, 0, .9
+                md_bg_color: 0, .38, 0, .9
                 MDBoxLayout:
                     orientation: 'vertical'
                     padding: 0, dp(17)
@@ -1296,12 +1300,14 @@ Container:
                         icon: 'check'
                         md_bg_color: 0, .7, 0, .7
                         icon_size: '20sp'
+                        theme_icon_color: 'Custom'
+                        icon_color: 'white'
                         pos_hint: {'center_x': .5, 'center_y': .5}
                         on_press: root.cancel_dismiss()
                         on_release:
                             root.cancel_dismiss()
                             app.password_collection(pwd.text, root)
-<ForgotPassword>:
+<ForgotPassword@MDBoxLayout>:
     orientation: 'vertical'
     MDRelativeLayout:
         size_hint_y: .1
@@ -1309,65 +1315,52 @@ Container:
             icon: 'close-circle-multiple-outline'
             icon_size: '25sp'
             theme_icon_color: 'Custom'
-            icon_color: 'black' if (root.count_ques == 5) or (root.count_ques == 0) else [1, 1, 1, .5]
+            icon_color: 'black'
             pos_hint: {'center_y': .5}
             on_release:
-                app.back_to_setting_screen('right', 'app_content') if (root.count_ques == 5) or (root.count_ques == 0) else ''
-        MDCard:
-            radius: [100, 100]
-            size_hint: None, None
-            size: dp(36), dp(36)
-            pos_hint: {'center_x': .9, 'center_y': .5}
-            md_bg_color: [1, 1, 1, .3]
-            SampleLabel:
-                text: str(root.count_ques)
-                font_size: '15sp'
-                text_color: [0, 0, .7, 1]
-                font_name: "Font/Roboto-Bold.ttf"
+                app.back_to_setting_screen('right', 'app_content')
     MDBoxLayout:
         orientation: 'vertical'
-        size_hint_y: .5
-        padding: dp(25), 0
-        spacing: dp(10)
-        SampleLabel:
-            text: root.infor
-            font_size: '12sp'
-            halign: 'left'
-            text_color: [0.37, 0, 0, 1]
-            font_name: "Font/Merienda-Light.ttf"
+        padding: dp(40), dp(10)
+        spacing: dp(50)
         MDRelativeLayout:
-            md_bg_color: [1, 1, 1, .3] if root.question else '#e2cbf2'
+            MDCard:
+                radius: [100, 100]
+                padding: dp(15), 0, 0, 0
+                elevation: 0
+                size_hint: None, None
+                size: dp(150), dp(150)
+                md_bg_color: [1, 1, 1, .3]
+                pos_hint: {'center_x': .5, 'center_y': .5}
+                MDIcon:
+                    icon: 'account-star'
+                    font_size: '100sp'
+                    theme_text_color: 'Custom'
+                    text_color: [.07, .47, .67, 1]
+                    pos_hint: {'center_y': .5}
+        MDCard:
+            elevation: 0
+            md_bg_color: [1, 1, 1, .3]
             SampleLabel:
-                text: root.question
-                font_size: '13sp'
+                text: "Demo[color=#ff0000][sub]version[/sub][/color]"
+                font_size: '20sp'
                 text_color: [0, 0, .7, 1]
-                font_name: "Font/Merienda-Light.ttf"
-        MDRelativeLayout:
-            id: btn_box
-            spacing: dp(100)
-            size_hint: .5, .5
-            pos_hint: {'center_x': .5}
-            MDFlatButton:
-                text: 'Yes'
-                theme_text_color: 'Custom'
-                text_color: [0, .77, 0, 1]
-                md_bg_color: [1, 1, 1, .3]
-                bold: True
-                font_size: '12sp'
-                pos_hint: {'center_x': .2}
-                font_name: "Font/Merienda-Light.ttf"
-                on_release: root.answer(True)
-            MDFlatButton:
-                text: 'No'
-                theme_text_color: 'Custom'
-                text_color: [.77, 0, 0, 1]
-                md_bg_color: [1, 1, 1, .3]
-                bold: True
-                font_size: '12sp'
-                pos_hint: {'center_x': .8}
-                font_name: "Font/Merienda-Light.ttf"
-                on_release: root.answer(False)
+                markup: True
+                font_name: "Font/Merienda-Black.ttf"
+        SampleLabel:
+            text:
+                app.subs_ref + " to get full version of this app \
+                and many more nice features.\n [font=Font/Sacramento-Regular.ttf][size=20] \
+                Thank you[/size][/font]."
+            font_size: '13sp'
+            text_color: [0, 0, .7, 1]
+            size_hint_y: .1
+            pos_hint: {'center_y': .5}
+            markup: True
+            font_name: "Font/TurretRoad-Medium.ttf"
+            on_ref_press: app.subscribe()
     MDWidget:
+        size_hint_y: .7
 
 # CLASS DECLARATIONS OF ADDROWCONTAINER AND EDITROWCONTAINER
 <Header@MDBoxLayout>:

@@ -4,6 +4,8 @@ Kivymd --version = 1.2.0
 """
 
 import threading
+import webbrowser
+
 from kivy.core.window import Window
 from kivymd.app import MDApp
 from kivy.clock import Clock
@@ -26,47 +28,6 @@ import re
 from datetime import (date)
 
 Window.size = (350, 680)
-
-
-class ForgotPassword(MDBoxLayout):
-    infor = StringProperty('Answer the following questions correctly to recover your password.')
-    question = StringProperty('Did you ever add new item in this week?')
-    count_ques = NumericProperty(5)
-    true = None
-    false = None
-
-    def answer(self, ans):
-        if self.count_ques > 0:
-            btn = self.ids.btn_box.children
-            self.true = btn[0]
-            self.false = btn[1]
-            self.question = ''
-            self.ids.btn_box.clear_widgets()
-            self.count_ques -= 1
-
-            if ans:
-                Clock.schedule_once(self.new_quest, 1)
-            else:
-                Clock.schedule_once(self.new_quest, 1)
-
-    def new_quest(self, dt):
-        if self.count_ques == 4:
-            self.question = '40'
-        elif self.count_ques == 3:
-            self.question = '3'
-        elif self.count_ques == 2:
-            self.question = '2'
-        elif self.count_ques == 1:
-            self.question = '1'
-
-        if self.count_ques > 0:
-            Clock.schedule_once(self.new_btn, .1)
-        elif self.count_ques == 0:
-            self.infor = 'Recovery questions completed'
-
-    def new_btn(self, dt=None):
-        self.ids.btn_box.add_widget(self.true)
-        self.ids.btn_box.add_widget(self.false)
 
 
 class AskPassword(MDBoxLayout):
@@ -137,7 +98,7 @@ class PasswordCreation(MDBoxLayout):
 class CheckPassword(MDBoxLayout):
     db = DB()
     attempt_count = 0
-    infor = StringProperty('Write your password to enter and get started')
+    infor = StringProperty('Enter your password and get started')
     color = ColorProperty('white')
 
     def match_password(self, pwd, root, skip_on_no_pwd=None):
@@ -245,6 +206,7 @@ class AddRowContainer(MDGridLayout):
                 self.reset_pads_input()
         else:
             self.wait = True
+            self.isFull = True
             self.infor = 'You have reached the free limit.'
             Clock.schedule_once(self.fade_infor, 10)
 
@@ -563,6 +525,7 @@ class Container(MDScreenManager):
 
 class Calculator(MDApp):
     title = 'OyaC'
+    ref = "[ref=subscribe][color=#ff0000][u][b]Subscribe[/b][/u][/color][/ref]"
 
     limit_container_rows = 36
     calc_limit_count_numbers = 99999999999
@@ -590,8 +553,9 @@ class Calculator(MDApp):
     result_color = ColorProperty([0, 0, 0, .7])
     result_bg_color = ColorProperty("#a5c4db")
     result = StringProperty('0')
+    subs_ref = StringProperty(ref)
     item_list = StringProperty("Selected items: 0")
-    item_list_color = ColorProperty([0, 0, 0, .8])
+    item_list_color = ColorProperty('blue')
 
     is_edit_or_del_container = BooleanProperty(False)
     may_i_edit = BooleanProperty(False)
@@ -607,6 +571,7 @@ class Calculator(MDApp):
     items = list()
 
     db = DB()
+    tm = None
 
     def build(self):
         self.theme_cls.theme_style = 'Dark'
@@ -800,7 +765,7 @@ class Calculator(MDApp):
     def resolve_calc_limit_count_numbers(self):
         if self.remove_comma(self.result) < self.calc_limit_count_numbers:
             self.result_color = [0, 0, 0, .7]
-            self.item_list_color = [0, 0, 0, .8]
+            self.item_list_color = 'blue'
             self.stop_count = False
 
     def surrender(self, x, q):
@@ -871,8 +836,6 @@ class Calculator(MDApp):
         self.long_press_btn[0] = 0
         self.focus_btn[0] = 0
 
-        self.db.drop_table()
-
     def back_to_setting_screen(self, direction, scr_name):
         self.root.transition = SlideTransition()
         self.root.transition.duration = .5
@@ -938,13 +901,20 @@ class Calculator(MDApp):
                 ask_pwd_root.color = 'red'
                 ask_pwd_root.infor = "Too short password"
 
-    def remove_pwd_pop(self, pop):
+    @staticmethod
+    def remove_pwd_pop(pop):
         pop.color = [0, 1, 0, 1]
         pop.infor = 'Done!'
         Clock.schedule_once(lambda x: pop.parent.remove_widget(pop), 1)
 
-    def forgot_password(self):
-        self.back_to_setting_screen('left', 'forget_pwd')
+    def forgot_password(self, from_add_row_widget=None):
+        if from_add_row_widget:
+            from_add_row_widget.count_me += 1
+            if from_add_row_widget.count_me >= 3:
+                self.back_to_setting_screen('left', 'forget_pwd')
+                from_add_row_widget.count_me = 0
+        else:
+            self.back_to_setting_screen('left', 'forget_pwd')
 
     # Task Screen   ---------------------------------------
     def is_edit_container(self, x, y, z):
@@ -1246,10 +1216,11 @@ class Calculator(MDApp):
                 self.db.delete_item(parent.row_id)  # db deletion
 
                 remain = int(self.root.ids.result_panel.result_text.text.split(':')[1]) - 1
-                self.task_scr_manager[3].infor = ''
-                self.task_scr_manager[3].isFull = False
                 self.task_scr_manager[3].abc.text = "Contents: " + str(remain)
                 self.root.ids.result_panel.result_text.text = "Contents: " + str(remain)
+                if remain < self.limit_container_rows:
+                    self.task_scr_manager[3].infor = ''
+                    self.task_scr_manager[3].isFull = False
 
                 self.popup.remove_widget(pop)
                 self.pop_opened = False
@@ -1283,7 +1254,7 @@ class Calculator(MDApp):
                 return True
             else:
                 return False
-        except Exception:
+        except Exception as e:
             return False
 
     @staticmethod
@@ -1291,6 +1262,15 @@ class Calculator(MDApp):
         for child in parent.children:
             if child.row_id == e:
                 parent.remove_widget(child)
+
+    def subscribe(self):
+        subc1 = "[ref=subscribe][color=#ff0000][u][b][size=15]Subscribe[/size][/b][/u][/color][/ref]"
+        self.subs_ref = subc1
+        Clock.schedule_once(self.animate_subscribe_txt, .5)
+        webbrowser.open("http://localhost:3000/WebG/Home")
+
+    def animate_subscribe_txt(self, dt):
+        self.subs_ref = self.ref
 
 
 if __name__ == "__main__":

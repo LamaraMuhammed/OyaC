@@ -40,7 +40,7 @@ class DB:
 
     def get_items(self):
         if self.start_process:
-            data = self.cur.execute("SELECT * FROM OyaC LIMIT 3").fetchall()
+            data = self.cur.execute("SELECT * FROM OyaC").fetchall()
             if data:
                 return data
 
@@ -55,11 +55,6 @@ class DB:
     # Password
     def create_pwd_table(self):
         self.cur.execute("CREATE TABLE IF NOT EXISTS OyaC_Password(user_password)")
-        self.conn.commit()
-
-    def drop_table(self):
-        self.cur.execute("DROP TABLE OyaC")
-        self.cur.execute("DROP TABLE OyaC_Password")
         self.conn.commit()
 
     def create_pwd(self, pwd):
