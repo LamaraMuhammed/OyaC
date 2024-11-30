@@ -2,7 +2,11 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+<<<<<<< HEAD
       <module fileurl="file://$PROJECT_DIR$/.idea/OyaC.iml" filepath="$PROJECT_DIR$/.idea/OyaC.iml" />
+=======
+      <module fileurl="file://$PROJECT_DIR$/.idea/Calculator.iml" filepath="$PROJECT_DIR$/.idea/Calculator.iml" />
+>>>>>>> 8d77f55736c598d70177ddaac42d5edf0159550e
     </modules>
   </component>
 </project>

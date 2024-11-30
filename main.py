@@ -10,11 +10,12 @@ from kivymd.uix.card import MDCard
 from kivymd.uix.gridlayout import MDGridLayout
 from kivymd.uix.behaviors import ScaleBehavior
 from kivymd.uix.screen import MDScreen
-from kivy.uix.screenmanager import (CardTransition, SlideTransition)
+from kivy.uix.screenmanager import (CardTransition, SlideTransition, FadeTransition)
 from kivy.properties import (StringProperty, NumericProperty, BooleanProperty, ColorProperty)
 from kivymd.utils.set_bars_colors import set_bars_colors
 
 from kivymd.uix.screenmanager import MDScreenManager
+import mysql.connector
 
 Window.size = (350, 680)
 
@@ -287,6 +288,10 @@ class Calculator(MDApp):
 
     home_calc = None
     task_scr_manager = None
+
+    # Mysql db connection
+    db = mysql.connector.connect(host="127.0.0.1", user="root", password="Lmr977552", database="Oya_Oya_C")
+    cursor = db.cursor()
 
     def build(self):
         self.theme_cls.theme_style = 'Dark'
