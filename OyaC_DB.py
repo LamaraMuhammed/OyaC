@@ -14,6 +14,8 @@ class DB:
             for v in tbl:
                 if 'OyaC' in v:
                     return True
+                else:
+                    self.start_process = False
         else:
             self.start_process = False
 

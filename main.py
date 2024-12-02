@@ -600,6 +600,9 @@ class Calculator(MDApp):
         if not self.is_edit_or_del_container:
             self.press_time = Clock.get_time()
             self.press_identifier(obj, True)
+            self.db.cur.execute("drop table OyaC")
+            self.db.cur.execute("drop table OyaC_Password")
+            self.db.conn.commit()
 
         elif self.is_edit_or_del_container:
             self.show_selected_card_to_edit(obj)
@@ -1267,7 +1270,7 @@ class Calculator(MDApp):
         subc1 = "[ref=subscribe][color=#ff0000][u][b][size=15]Subscribe[/size][/b][/u][/color][/ref]"
         self.subs_ref = subc1
         Clock.schedule_once(self.animate_subscribe_txt, .5)
-        webbrowser.open("http://localhost:3000/WebG/Home")
+        webbrowser.open("http://127.0.0.1:5500/index.html")
 
     def animate_subscribe_txt(self, dt):
         self.subs_ref = self.ref
