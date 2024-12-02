@@ -600,9 +600,6 @@ class Calculator(MDApp):
         if not self.is_edit_or_del_container:
             self.press_time = Clock.get_time()
             self.press_identifier(obj, True)
-            self.db.cur.execute("drop table OyaC")
-            self.db.cur.execute("drop table OyaC_Password")
-            self.db.conn.commit()
 
         elif self.is_edit_or_del_container:
             self.show_selected_card_to_edit(obj)
